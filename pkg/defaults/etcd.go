@@ -21,9 +21,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apiserver/pkg/storage"
 )
 
 // rest implements a RESTStorage for API services against etcd
@@ -32,8 +29,8 @@ type BasicREST struct {
 }
 
 type RESTFactory struct {
-	scheme *runtime.Scheme
-	optsGetter generic.RESTOptionsGetter
+	Scheme     *runtime.Scheme
+	OptsGetter generic.RESTOptionsGetter
 }
 
 type RestFunctions interface {
@@ -44,10 +41,10 @@ type RestFunctions interface {
 
 // NewREST returns a RESTStorage object that will work against API services.
 func (f *RESTFactory) NewBasicREST(groupResource schema.GroupResource, fns RestFunctions) *BasicREST {
-	strategy := NewBasicStrategy(f.scheme)
+	strategy := NewBasicStrategy(f.Scheme)
 
 	store := &registry.Store{
-		Copier:      f.scheme,
+		Copier:      f.Scheme,
 		NewFunc:     fns.NewFunc,
 		NewListFunc: fns.NewListFunc,
 		ObjectNameFunc: fns.ObjectNameFunc,
@@ -58,7 +55,7 @@ func (f *RESTFactory) NewBasicREST(groupResource schema.GroupResource, fns RestF
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
-	options := &generic.StoreOptions{RESTOptions: f.optsGetter, AttrFunc: GetAttrs}
+	options := &generic.StoreOptions{RESTOptions: f.OptsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
 		panic(err) // TODO: Propagate error up
 	}

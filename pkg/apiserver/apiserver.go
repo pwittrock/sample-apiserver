@@ -24,13 +24,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/version"
-	"k8s.io/apiserver/pkg/registry/rest"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
-	"k8s.io/sample-apiserver/pkg/apis/wardle"
+	w "k8s.io/sample-apiserver/apis/wardle"
 	"k8s.io/sample-apiserver/pkg/apis/wardle/install"
-	"k8s.io/sample-apiserver/pkg/apis/wardle/v1alpha1"
-	wardlestorage "k8s.io/sample-apiserver/pkg/registry/wardle"
+	"k8s.io/sample-apiserver/pkg/defaults"
 )
 
 var (
@@ -88,6 +86,16 @@ func (c *Config) SkipComplete() completedConfig {
 	return completedConfig{c}
 }
 
+func (c completedConfig) Factory() *defaults.APIFactory {
+	return &defaults.APIFactory{
+		defaults.RESTFactory{Scheme, c.GenericConfig.RESTOptionsGetter},
+		groupFactoryRegistry,
+		registry,
+		Scheme,
+		Codecs,
+	}
+}
+
 // New returns a new instance of WardleServer from the given config.
 func (c completedConfig) New() (*WardleServer, error) {
 	genericServer, err := c.Config.GenericConfig.SkipComplete().New() // completion is done in Complete, no need for a second time
@@ -99,21 +107,15 @@ func (c completedConfig) New() (*WardleServer, error) {
 		GenericAPIServer: genericServer,
 	}
 
-	if err := c.addFlunderApi(s); err != nil {
+
+	f := c.Factory()
+	apiGroupInfo, err := f.CreateAPI(w.API)
+
+	if err != nil {
+		return nil, err
+	}
+	if err := s.GenericAPIServer.InstallAPIGroup(apiGroupInfo); err != nil {
 		return nil, err
 	}
 	return s, nil
-}
-
-func (c *completedConfig) addFlunderApi(s *WardleServer) error {
-	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(wardle.GroupName, registry, Scheme, metav1.ParameterCodec, Codecs)
-	apiGroupInfo.GroupMeta.GroupVersion = v1alpha1.SchemeGroupVersion
-	v1alpha1storage := map[string]rest.Storage{}
-	v1alpha1storage["flunders"] = wardlestorage.NewREST(Scheme, c.GenericConfig.RESTOptionsGetter)
-	apiGroupInfo.VersionedResourcesStorageMap["v1alpha1"] = v1alpha1storage
-
-	if err := s.GenericAPIServer.InstallAPIGroup(&apiGroupInfo); err != nil {
-		return err
-	}
-	return nil
 }

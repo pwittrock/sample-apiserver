@@ -43,7 +43,7 @@ var _ rest.RESTUpdateStrategy = &BasicApiServerStrategy{}
 //var _ rest.RESTExportStrategy = &BasicApiServerStrategy{}
 
 type HasObjectMeta interface {
-	GetObjectMeta() metav1.ObjectMeta
+	GetObjectMeta() *metav1.ObjectMeta
 }
 
 func NewBasicStrategy(typer runtime.ObjectTyper) BasicApiServerStrategy {
@@ -103,5 +103,5 @@ func (BasicApiServerStrategy) BasicMatch(label labels.Selector, field fields.Sel
 
 // GetSelectableFields returns a field set that represents the object.
 func GetSelectableFields(obj HasObjectMeta) fields.Set {
-	return generic.ObjectMetaFieldsSet(&obj.GetObjectMeta(), true)
+	return generic.ObjectMetaFieldsSet(obj.GetObjectMeta(), true)
 }
