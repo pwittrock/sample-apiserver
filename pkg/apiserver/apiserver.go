@@ -99,6 +99,13 @@ func (c completedConfig) New() (*WardleServer, error) {
 		GenericAPIServer: genericServer,
 	}
 
+	if err := c.addFlunderApi(s); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func (c *completedConfig) addFlunderApi(s *WardleServer) error {
 	apiGroupInfo := genericapiserver.NewDefaultAPIGroupInfo(wardle.GroupName, registry, Scheme, metav1.ParameterCodec, Codecs)
 	apiGroupInfo.GroupMeta.GroupVersion = v1alpha1.SchemeGroupVersion
 	v1alpha1storage := map[string]rest.Storage{}
@@ -106,8 +113,7 @@ func (c completedConfig) New() (*WardleServer, error) {
 	apiGroupInfo.VersionedResourcesStorageMap["v1alpha1"] = v1alpha1storage
 
 	if err := s.GenericAPIServer.InstallAPIGroup(&apiGroupInfo); err != nil {
-		return nil, err
+		return err
 	}
-
-	return s, nil
+	return nil
 }

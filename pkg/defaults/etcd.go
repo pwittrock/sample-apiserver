@@ -14,40 +14,53 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package wardle
+package defaults
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apiserver/pkg/registry/generic"
-	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
-	"k8s.io/sample-apiserver/pkg/apis/wardle"
-	"k8s.io/sample-apiserver/pkg/defaults"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apiserver/pkg/storage"
 )
 
 // rest implements a RESTStorage for API services against etcd
-type REST struct {
-	*genericregistry.Store
+type BasicREST struct {
+	*registry.Store
+}
+
+type RESTFactory struct {
+	scheme *runtime.Scheme
+	optsGetter generic.RESTOptionsGetter
+}
+
+type RestFunctions interface {
+	NewFunc() runtime.Object
+	NewListFunc() runtime.Object
+	ObjectNameFunc(obj runtime.Object) (string, error)
 }
 
 // NewREST returns a RESTStorage object that will work against API services.
-func NewREST(scheme *runtime.Scheme, optsGetter generic.RESTOptionsGetter) *REST {
-	strategy := NewStrategy(scheme)
+func (f *RESTFactory) NewBasicREST(groupResource schema.GroupResource, fns RestFunctions) *BasicREST {
+	strategy := NewBasicStrategy(f.scheme)
 
-	store := &genericregistry.Store{
-		Copier:      scheme,
-		NewFunc:     defaults.RestWiring.NewFunc,
-		NewListFunc: defaults.RestWiring.NewListFunc,
-		ObjectNameFunc: defaults.RestWiring.ObjectNameFunc,
-		PredicateFunc:     MatchFlunder,
-		QualifiedResource: wardle.Resource("flunders"),
+	store := &registry.Store{
+		Copier:      f.scheme,
+		NewFunc:     fns.NewFunc,
+		NewListFunc: fns.NewListFunc,
+		ObjectNameFunc: fns.ObjectNameFunc,
+		PredicateFunc:     strategy.BasicMatch,
+		QualifiedResource: groupResource,
 
 		CreateStrategy: strategy,
 		UpdateStrategy: strategy,
 		DeleteStrategy: strategy,
 	}
-	options := &generic.StoreOptions{RESTOptions: optsGetter, AttrFunc: GetAttrs}
+	options := &generic.StoreOptions{RESTOptions: f.optsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
 		panic(err) // TODO: Propagate error up
 	}
-	return &REST{store}
+	return &BasicREST{store}
 }
