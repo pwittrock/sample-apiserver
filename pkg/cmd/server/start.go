@@ -22,10 +22,13 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
-	"k8s.io/sample-apiserver/pkg/apis/wardle/v1alpha1"
 	"k8s.io/sample-apiserver/pkg/apiserver"
+	"k8s.io/sample-apiserver/pkg/defaults"
+
+	generatedopenapi "k8s.io/sample-apiserver/pkg/openapi"
 )
 
 const defaultEtcdPathPrefix = "/registry/wardle.kubernetes.io"
@@ -33,16 +36,23 @@ const defaultEtcdPathPrefix = "/registry/wardle.kubernetes.io"
 type WardleServerOptions struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
 
-	StdOut io.Writer
-	StdErr io.Writer
+	StdOut       io.Writer
+	StdErr       io.Writer
+	APIProviders []defaults.ResourceDefinitionProvider
 }
 
-func NewWardleServerOptions(out, errOut io.Writer) *WardleServerOptions {
-	o := &WardleServerOptions{
-		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, apiserver.Scheme, apiserver.Codecs.LegacyCodec(v1alpha1.SchemeGroupVersion)),
+func NewWardleServerOptions(out, errOut io.Writer, providers []defaults.ResourceDefinitionProvider) *WardleServerOptions {
+	versions := []schema.GroupVersion{}
+	for _, p := range providers {
+		versions = append(versions, p.GetLegacyCodec()...)
+	}
 
-		StdOut: out,
-		StdErr: errOut,
+	o := &WardleServerOptions{
+		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, defaults.Scheme, defaults.Codecs.LegacyCodec(versions...)),
+
+		StdOut:       out,
+		StdErr:       errOut,
+		APIProviders: providers,
 	}
 	o.RecommendedOptions.SecureServing.ServingOptions.BindPort = 443
 
@@ -50,8 +60,8 @@ func NewWardleServerOptions(out, errOut io.Writer) *WardleServerOptions {
 }
 
 // NewCommandStartMaster provides a CLI handler for 'start master' command
-func NewCommandStartWardleServer(out, errOut io.Writer, stopCh <-chan struct{}) *cobra.Command {
-	o := NewWardleServerOptions(out, errOut)
+func NewCommandStartWardleServer(out, errOut io.Writer, providers []defaults.ResourceDefinitionProvider, stopCh <-chan struct{}) *cobra.Command {
+	o := NewWardleServerOptions(out, errOut, providers)
 
 	cmd := &cobra.Command{
 		Short: "Launch a wardle API server",
@@ -90,7 +100,7 @@ func (o WardleServerOptions) Config() (*apiserver.Config, error) {
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
 
-	serverConfig := genericapiserver.NewConfig().WithSerializer(apiserver.Codecs)
+	serverConfig := genericapiserver.NewConfig().WithSerializer(defaults.Codecs)
 	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
 		return nil, err
 	}
@@ -107,7 +117,16 @@ func (o WardleServerOptions) RunWardleServer(stopCh <-chan struct{}) error {
 		return err
 	}
 
-	server, err := config.Complete().New()
+	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(generatedopenapi.GetOpenAPIDefinitions, defaults.Scheme)
+	//config.GenericConfig.OpenAPIConfig.PostProcessSpec = postProcessOpenAPISpecForBackwardCompatibility
+	//config.GenericConfig.OpenAPIConfig.SecurityDefinitions = securityDefinitions
+	config.GenericConfig.OpenAPIConfig.Info.Title = "Wardle"
+
+	for _, provider := range o.APIProviders {
+		config.AddApi(provider)
+	}
+
+	server, err := config.Init().Complete().New()
 	if err != nil {
 		return err
 	}

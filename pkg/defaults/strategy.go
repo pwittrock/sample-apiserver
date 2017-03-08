@@ -31,52 +31,51 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-type BasicApiServerStrategy struct {
+type BasicCreateDeleteUpdateStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
 }
 
-var _ rest.RESTCreateStrategy = &BasicApiServerStrategy{}
-var _ rest.RESTDeleteStrategy = &BasicApiServerStrategy{}
-var _ rest.RESTUpdateStrategy = &BasicApiServerStrategy{}
-//var _ rest.RESTGracefulDeleteStrategy = &BasicApiServerStrategy{}
-//var _ rest.RESTExportStrategy = &BasicApiServerStrategy{}
+var _ rest.RESTCreateStrategy = &BasicCreateDeleteUpdateStrategy{}
+var _ rest.RESTDeleteStrategy = &BasicCreateDeleteUpdateStrategy{}
+var _ rest.RESTUpdateStrategy = &BasicCreateDeleteUpdateStrategy{}
 
 type HasObjectMeta interface {
 	GetObjectMeta() *metav1.ObjectMeta
 }
 
-func NewBasicStrategy(typer runtime.ObjectTyper) BasicApiServerStrategy {
-	return BasicApiServerStrategy{typer, names.SimpleNameGenerator}
+// Create a new Basic
+func NewBasicStrategy(typer runtime.ObjectTyper) BasicCreateDeleteUpdateStrategy {
+	return BasicCreateDeleteUpdateStrategy{typer, names.SimpleNameGenerator}
 }
 
-func (BasicApiServerStrategy) NamespaceScoped() bool {
+func (BasicCreateDeleteUpdateStrategy) NamespaceScoped() bool {
 	return false
 }
 
-func (BasicApiServerStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
+func (BasicCreateDeleteUpdateStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
 }
 
-func (BasicApiServerStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+func (BasicCreateDeleteUpdateStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
 }
 
-func (BasicApiServerStrategy) Validate(ctx genericapirequest.Context, obj runtime.Object) field.ErrorList {
+func (BasicCreateDeleteUpdateStrategy) Validate(ctx genericapirequest.Context, obj runtime.Object) field.ErrorList {
 	return field.ErrorList{}
 	// return validation.ValidateFlunder(obj.(*wardle.Flunder))
 }
 
-func (BasicApiServerStrategy) AllowCreateOnUpdate() bool {
+func (BasicCreateDeleteUpdateStrategy) AllowCreateOnUpdate() bool {
 	return false
 }
 
-func (BasicApiServerStrategy) AllowUnconditionalUpdate() bool {
+func (BasicCreateDeleteUpdateStrategy) AllowUnconditionalUpdate() bool {
 	return false
 }
 
-func (BasicApiServerStrategy) Canonicalize(obj runtime.Object) {
+func (BasicCreateDeleteUpdateStrategy) Canonicalize(obj runtime.Object) {
 }
 
-func (BasicApiServerStrategy) ValidateUpdate(ctx genericapirequest.Context, obj, old runtime.Object) field.ErrorList {
+func (BasicCreateDeleteUpdateStrategy) ValidateUpdate(ctx genericapirequest.Context, obj, old runtime.Object) field.ErrorList {
 	return field.ErrorList{}
 	// return validation.ValidateFlunderUpdate(obj.(*wardle.Flunder), old.(*wardle.Flunder))
 }
@@ -93,7 +92,7 @@ func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 
 // MatchResource is the filter used by the generic etcd backend to watch events
 // from etcd to clients of the apiserver only interested in specific labels/fields.
-func (BasicApiServerStrategy) BasicMatch(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
+func (BasicCreateDeleteUpdateStrategy) BasicMatch(label labels.Selector, field fields.Selector) storage.SelectionPredicate {
 	return storage.SelectionPredicate{
 		Label:    label,
 		Field:    field,

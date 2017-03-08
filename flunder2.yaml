@@ -1,0 +1,7 @@
+apiVersion: wardle.k8s.io/v1alpha2
+kind: Flunder
+metadata:
+  name: flunder2
+spec:
+  A: b
+  B: b

@@ -1174,6 +1174,10 @@
 			"ImportPath": "k8s.io/client-go/util/jsonpath",
 			"Comment": "v2.0.0-alpha.0-52-g8b466d6",
 			"Rev": "8b466d64c5da37e0d3985b907d812e1f58cb41cb"
+		},
+		{
+			"ImportPath": "k8s.io/gengo",
+			"Rev": "c118aa8edfff53fe5b69127a970f54b6cf3a7563"
 		}
 	]
 }

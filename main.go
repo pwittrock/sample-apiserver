@@ -25,8 +25,11 @@ import (
 	"k8s.io/apiserver/pkg/util/logs"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 	"k8s.io/sample-apiserver/pkg/cmd/server"
+	"k8s.io/sample-apiserver/apis"
+	"k8s.io/sample-apiserver/pkg/defaults"
 )
 
+//go:generate go run cmd/genwiring/main.go --input-dirs ./apis/...
 func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
@@ -35,7 +38,8 @@ func main() {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
 
-	cmd := server.NewCommandStartWardleServer(os.Stdout, os.Stderr, wait.NeverStop)
+	providers := []defaults.ResourceDefinitionProvider{apis.GetWardleProvider()}
+	cmd := server.NewCommandStartWardleServer(os.Stdout, os.Stderr, providers, wait.NeverStop)
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 	if err := cmd.Execute(); err != nil {
 		panic(err)

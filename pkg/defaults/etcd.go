@@ -23,41 +23,40 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-// rest implements a RESTStorage for API services against etcd
-type BasicREST struct {
+// rest implements a RESTStorage for ResourceDefinition services against etcd
+type APIStorage struct {
 	*registry.Store
 }
 
-type RESTFactory struct {
+type StorageFactory struct {
 	Scheme     *runtime.Scheme
 	OptsGetter generic.RESTOptionsGetter
 }
 
-type RestFunctions interface {
+type StorageStrategy interface {
 	NewFunc() runtime.Object
 	NewListFunc() runtime.Object
 	ObjectNameFunc(obj runtime.Object) (string, error)
 }
 
-// NewREST returns a RESTStorage object that will work against API services.
-func (f *RESTFactory) NewBasicREST(groupResource schema.GroupResource, fns RestFunctions) *BasicREST {
-	strategy := NewBasicStrategy(f.Scheme)
-
+// NewREST returns a RESTStorage object that will work against ResourceDefinition services.
+func (f *StorageFactory) Create(groupResource schema.GroupResource, resourceDef *ResourceDefinition) *APIStorage {
 	store := &registry.Store{
-		Copier:      f.Scheme,
-		NewFunc:     fns.NewFunc,
-		NewListFunc: fns.NewListFunc,
-		ObjectNameFunc: fns.ObjectNameFunc,
-		PredicateFunc:     strategy.BasicMatch,
+		Copier:            f.Scheme,
+		NewFunc:           resourceDef.StorageStrategy.NewFunc,
+		NewListFunc:       resourceDef.StorageStrategy.NewListFunc,
+		ObjectNameFunc:    resourceDef.StorageStrategy.ObjectNameFunc,
+		PredicateFunc:     resourceDef.PredicateFunc,
+		CreateStrategy:    resourceDef.CreateStrategy,
+		UpdateStrategy:    resourceDef.UpdateStrategy,
+		DeleteStrategy:    resourceDef.DeleteStrategy,
 		QualifiedResource: groupResource,
-
-		CreateStrategy: strategy,
-		UpdateStrategy: strategy,
-		DeleteStrategy: strategy,
+		WatchCacheSize:    1000,
 	}
+
 	options := &generic.StoreOptions{RESTOptions: f.OptsGetter, AttrFunc: GetAttrs}
 	if err := store.CompleteWithOptions(options); err != nil {
 		panic(err) // TODO: Propagate error up
 	}
-	return &BasicREST{store}
+	return &APIStorage{store}
 }

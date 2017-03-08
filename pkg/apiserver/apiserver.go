@@ -22,38 +22,43 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/version"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
-	w "k8s.io/sample-apiserver/apis/wardle"
-	"k8s.io/sample-apiserver/pkg/apis/wardle/install"
 	"k8s.io/sample-apiserver/pkg/defaults"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"github.com/golang/glog"
 )
 
-var (
-	groupFactoryRegistry = make(announced.APIGroupFactoryRegistry)
-	registry             = registered.NewOrDie("")
-	Scheme               = runtime.NewScheme()
-	Codecs               = serializer.NewCodecFactory(Scheme)
-)
 
-func init() {
-	install.Install(groupFactoryRegistry, registry, Scheme)
+type Installer struct {
+	GroupFactoryRegistry announced.APIGroupFactoryRegistry
+	Registry *registered.APIRegistrationManager
+	Scheme *runtime.Scheme
+}
+
+func (c *Config) Init() *Config {
+
+	i := Installer{defaults.GroupFactoryRegistry, defaults.Registry, defaults.Scheme}
+	for _, provider := range defaults.APIProviders {
+		i.Install(provider)
+	}
 
 	// we need to add the options to empty v1
 	// TODO fix the server code to avoid this
-	metav1.AddToGroupVersion(Scheme, schema.GroupVersion{Version: "v1"})
+	metav1.AddToGroupVersion(defaults.Scheme, schema.GroupVersion{Version: "v1"})
 
-	// TODO: keep the generic API server from wanting this
+	// TODO: keep the generic ResourceDefinition server from wanting this
 	unversioned := schema.GroupVersion{Group: "", Version: "v1"}
-	Scheme.AddUnversionedTypes(unversioned,
+	defaults.Scheme.AddUnversionedTypes(unversioned,
 		&metav1.Status{},
 		&metav1.APIVersions{},
 		&metav1.APIGroupList{},
 		&metav1.APIGroup{},
 		&metav1.APIResourceList{},
 	)
+
+	return c
 }
 
 type Config struct {
@@ -81,19 +86,14 @@ func (c *Config) Complete() completedConfig {
 	return completedConfig{c}
 }
 
+func (c *Config) AddApi(provider defaults.ResourceDefinitionProvider) *Config {
+	defaults.APIProviders = append(defaults.APIProviders, provider)
+	return c
+}
+
 // SkipComplete provides a way to construct a server instance without config completion.
 func (c *Config) SkipComplete() completedConfig {
 	return completedConfig{c}
-}
-
-func (c completedConfig) Factory() *defaults.APIFactory {
-	return &defaults.APIFactory{
-		defaults.RESTFactory{Scheme, c.GenericConfig.RESTOptionsGetter},
-		groupFactoryRegistry,
-		registry,
-		Scheme,
-		Codecs,
-	}
 }
 
 // New returns a new instance of WardleServer from the given config.
@@ -107,15 +107,40 @@ func (c completedConfig) New() (*WardleServer, error) {
 		GenericAPIServer: genericServer,
 	}
 
-
-	f := c.Factory()
-	apiGroupInfo, err := f.CreateAPI(w.API)
-
-	if err != nil {
-		return nil, err
+	apiGroupFactory := &defaults.APIGroupFactory{
+		defaults.StorageFactory{defaults.Scheme, c.GenericConfig.RESTOptionsGetter},
+		defaults.GroupFactoryRegistry,
+		defaults.Registry,
+		defaults.Scheme,
+		defaults.Codecs,
 	}
-	if err := s.GenericAPIServer.InstallAPIGroup(apiGroupInfo); err != nil {
-		return nil, err
+
+	glog.Infof("Provider count %v", len(defaults.APIProviders))
+	for _, provider := range defaults.APIProviders {
+		apiGroupInfo, err := apiGroupFactory.Create(provider.GetResourceDefinitions())
+		if err != nil {
+			return nil, err
+		}
+		if err := s.GenericAPIServer.InstallAPIGroup(apiGroupInfo); err != nil {
+			return nil, err
+		}
 	}
 	return s, nil
+}
+
+// Install registers the ResourceDefinition group and adds types to a scheme
+func (i *Installer) Install(group defaults.ResourceDefinitionProvider) {
+	glog.Infof("Installing %s %s", group.GetGroupName(), group.GetImportPrefix())
+	if err := announced.NewGroupMetaFactory(
+		&announced.GroupMetaFactoryArgs{
+			GroupName:                  group.GetGroupName(),
+			RootScopedKinds:            sets.NewString("APIService"),
+			VersionPreferenceOrder:     group.GetVersionPreferenceOrder(),
+			ImportPrefix:               group.GetImportPrefix(),
+			AddInternalObjectsToScheme: group.SchemeFunc(),
+		},
+		group.VersionToSchemeFunc(),
+	).Announce(i.GroupFactoryRegistry).RegisterAndEnable(i.Registry, i.Scheme); err != nil {
+		panic(err)
+	}
 }
