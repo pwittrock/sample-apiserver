@@ -97,7 +97,6 @@ func Convert_wardle_FlunderList_To_v1alpha1_FlunderList(in *wardle.FlunderList, 
 }
 
 func autoConvert_v1alpha1_FlunderSpec_To_wardle_FlunderSpec(in *FlunderSpec, out *wardle.FlunderSpec, s conversion.Scope) error {
-	out.A = in.A
 	return nil
 }
 
@@ -106,7 +105,6 @@ func Convert_v1alpha1_FlunderSpec_To_wardle_FlunderSpec(in *FlunderSpec, out *wa
 }
 
 func autoConvert_wardle_FlunderSpec_To_v1alpha1_FlunderSpec(in *wardle.FlunderSpec, out *FlunderSpec, s conversion.Scope) error {
-	out.A = in.A
 	return nil
 }
 

@@ -38,7 +38,7 @@ func main() {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
 
-	providers := []defaults.ResourceDefinitionProvider{apis.GetWardleProvider(), apis.GetHyruleProvider()}
+	providers := []defaults.ResourceDefinitionProvider{apis.GetWardleProvider(), apis.GetHyruleProvider(), apis.GetMushroomkingdomProvider()}
 	cmd := server.NewCommandStartWardleServer(os.Stdout, os.Stderr, providers, wait.NeverStop)
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 	if err := cmd.Execute(); err != nil {

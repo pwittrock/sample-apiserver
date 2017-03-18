@@ -15,8 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
+// +k8s:conversion-gen=github.com/pwittrock/apiserver-helloworld/apis/mushroomkingdom
 
-// Package api is the internal version of the API.
-package wardle
-
+package v2

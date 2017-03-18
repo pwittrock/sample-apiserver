@@ -100,39 +100,92 @@ func RunAddTypes(cmd *cobra.Command, args []string) {
 	}
 
 	for _, gv := range groupVersions.List() {
+		split := strings.Split(gv, "/")
+		group := split[0]
+		version := split[1]
+
 		path := filepath.Join(repoPath, "apis", gv)
 		_, err := os.Stat(path)
-		if err == nil {
-			continue
-		}
-		if !os.IsNotExist(err) {
-			fmt.Printf("Could not stat directory %s %v", path, err)
-			continue
-		}
-		fmt.Printf("Creating directory %s\n", path)
-		out, err := exec.Command("mkdir", "-p", path).CombinedOutput()
 		if err != nil {
-			fmt.Printf("Failed to create directory %s %v %s", path, err, out)
+			if !os.IsNotExist(err) {
+				panic(fmt.Sprintf("Could not stat directory %s %v", path, err))
+			}
+			fmt.Printf("Creating directory %s\n", path)
+			out, err := exec.Command("mkdir", "-p", path).CombinedOutput()
+			if err != nil {
+				fmt.Printf("Failed to create directory %s %v %s", path, err, out)
+			}
 		}
 
-		t := template.Must(template.New("new-types-template").Parse(newTypesTemplate))
 		typesgo := filepath.Join(path, "types.go")
-		f, err := os.Create(typesgo)
+		_, err = os.Stat(typesgo)
 		if err != nil {
-			fmt.Println(err)
-			return
-		}
-		f.Close()
+			if !os.IsNotExist(err) {
+				panic(fmt.Sprintf("Could not stat file %s %v", typesgo, err))
+			}
+			t := template.Must(template.New("new-types-template").Parse(newTypesTemplate))
+			f, err := os.Create(typesgo)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			f.Close()
 
-		v := strings.Split(gv, "/")
-		f, err = os.OpenFile(typesgo, os.O_WRONLY, 0)
-		err = t.Execute(f, NewTypesGoArguments{
-			Package: v[1],
-		})
-		if err != nil {
-			fmt.Println(err)
+			f, err = os.OpenFile(typesgo, os.O_WRONLY, 0)
+			err = t.Execute(f, NewTypesGoArguments{
+				Package: version,
+			})
+			if err != nil {
+				fmt.Println(err)
+			}
+			f.Close()
 		}
-		f.Close()
+
+		docgo := filepath.Join(path, "doc.go")
+		_, err = os.Stat(docgo)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				panic(fmt.Sprintf("Could not stat file %s %v", docgo, err))
+			}
+
+			t := template.Must(template.New("new-doc-template").Parse(newVersionDocTemplate))
+			f, err := os.Create(docgo)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			f.Close()
+
+			f, err = os.OpenFile(docgo, os.O_WRONLY, 0)
+			err = t.Execute(f, NewDocTemplateArguments{version, filepath.Join(repoPackage, "apis", group), group})
+			if err != nil {
+				fmt.Println(err)
+			}
+			f.Close()
+		}
+
+		groupdocgo := filepath.Join(repoPath, "apis", group, "doc.go")
+		_, err = os.Stat(groupdocgo)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				panic(fmt.Sprintf("Could not stat file %s %v", groupdocgo, err))
+			}
+
+			t := template.Must(template.New("new-group-doc-template").Parse(newGroupDocTemplate))
+			f, err := os.Create(groupdocgo)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			f.Close()
+
+			f, err = os.OpenFile(groupdocgo, os.O_WRONLY, 0)
+			err = t.Execute(f, NewDocTemplateArguments{version, filepath.Join(repoPackage, "apis", group), group})
+			if err != nil {
+				fmt.Println(err)
+			}
+			f.Close()
+		}
 	}
 
 	for k, gv := range kindsToGroupVersion {
@@ -208,3 +261,57 @@ import (
 )
 
 `)
+
+type NewDocTemplateArguments struct {
+	Version string
+	Package string
+	Group   string
+}
+
+var newVersionDocTemplate = `
+/*
+Copyright 2017 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// +k8s:openapi-gen=true
+// +k8s:deepcopy-gen=package,register
+// +k8s:conversion-gen={{.Package}}
+
+package {{.Version}}
+`
+
+var newGroupDocTemplate = `
+/*
+Copyright 2017 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// +k8s:deepcopy-gen=package,register
+
+// Package api is the internal version of the API.
+package {{.Group}}
+
+`
