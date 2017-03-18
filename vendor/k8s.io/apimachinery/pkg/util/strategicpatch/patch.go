@@ -1106,7 +1106,7 @@ func slicesHaveConflicts(
 			return false, nil
 		}
 
-		// Build a map for each slice and then compare the two maps
+		// build a map for each slice and then compare the two maps
 		leftMap, err := sliceOfMapsToMapOfMaps(typedLeft, fieldPatchMergeKey)
 		if err != nil {
 			return true, err

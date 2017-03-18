@@ -15,7 +15,7 @@ package prometheus
 
 // Collector is the interface implemented by anything that can be used by
 // Prometheus to collect metrics. A Collector has to be registered for
-// collection. See Register, MustRegister, RegisterOrGet, and MustRegisterOrGet.
+// collection. See RegisterTypes, MustRegister, RegisterOrGet, and MustRegisterOrGet.
 //
 // The stock metrics provided by this package (like Gauge, Counter, Summary) are
 // also Collectors (which only ever collect one metric, namely itself). An

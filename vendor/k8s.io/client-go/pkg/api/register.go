@@ -137,7 +137,7 @@ func addKnownTypes(scheme *runtime.Scheme) error {
 		&ConfigMapList{},
 	)
 
-	// Register Unversioned types under their own special group
+	// RegisterTypes Unversioned types under their own special group
 	scheme.AddUnversionedTypes(Unversioned,
 		&metav1.Status{},
 		&metav1.APIVersions{},

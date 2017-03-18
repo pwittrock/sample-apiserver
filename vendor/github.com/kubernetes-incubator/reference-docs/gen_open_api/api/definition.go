@@ -118,8 +118,9 @@ type Definition struct {
 	// open-api schema for the definition
 	schema spec.Schema
 	// Display name of the definition (e.g. Deployment)
-	Name  string
-	Group ApiGroup
+	Name      string
+	Group     ApiGroup
+	ShowGroup bool
 	// Api version of the definition (e.g. v1beta1)
 	Version ApiVersion
 	Kind    ApiKind
@@ -163,15 +164,25 @@ func (d *Definition) Key() string {
 }
 
 func (d *Definition) MdLink() string {
-	return fmt.Sprintf("[%s](#%s-%s)", d.Name, strings.ToLower(d.Name), d.Version)
+	if *UseTags {
+		return fmt.Sprintf("[%s](#%s-%s)", d.Name, strings.ToLower(d.Name), d.Version)
+	}
+	return fmt.Sprintf("[%s](#%s-%s-%s)", d.Name, strings.ToLower(d.Name), d.Version, d.Group)
+
 }
 
 func (d *Definition) HrefLink() string {
-	return fmt.Sprintf("<a href=\"#%s-%s\">%s</a>", strings.ToLower(d.Name), d.Version, d.Name)
+	if *UseTags {
+		return fmt.Sprintf("<a href=\"#%s-%s\">%s</a>", strings.ToLower(d.Name), d.Version, d.Name)
+	}
+	return fmt.Sprintf("<a href=\"#%s-%s-%s\">%s</a>", strings.ToLower(d.Name), d.Version, d.Name, d.Group)
 }
 
 func (d *Definition) VersionLink() string {
-	return fmt.Sprintf("<a href=\"#%s-%s\">%s</a>", strings.ToLower(d.Name), d.Version, d.Version)
+	if *UseTags {
+		return fmt.Sprintf("<a href=\"#%s-%s\">%s</a>", strings.ToLower(d.Name), d.Version, d.Version)
+	}
+	return fmt.Sprintf("<a href=\"#%s-%s-%s\">%s</a>", strings.ToLower(d.Name), d.Version, d.Version, d.Group)
 }
 
 func (d Definition) Description() string {
@@ -209,19 +220,15 @@ func VisitDefinitions(specs []*loads.Document, fn func(definition *Definition)) 
 			}
 
 			fn(&Definition{
-				schema:  spec,
-				Name:    kind,
-				Version: ApiVersion(version),
-				Kind:    ApiKind(kind),
-				Group:   ApiGroup(group),
+				schema:    spec,
+				Name:      kind,
+				Version:   ApiVersion(version),
+				Kind:      ApiKind(kind),
+				Group:     ApiGroup(group),
+				ShowGroup: !*UseTags,
 			})
 		}
 	}
-	gs := ApiGroups{}
-	for k, _ := range groups {
-		gs = append(gs, ApiGroup(k))
-	}
-	sort.Sort(gs)
 }
 
 func (d *Definition) GetSamples() []ExampleText {

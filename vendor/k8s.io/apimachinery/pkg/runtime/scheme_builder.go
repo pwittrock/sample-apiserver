@@ -33,14 +33,14 @@ func (sb *SchemeBuilder) AddToScheme(s *Scheme) error {
 	return nil
 }
 
-// Register adds a scheme setup function to the list.
+// RegisterTypes adds a scheme setup function to the list.
 func (sb *SchemeBuilder) Register(funcs ...func(*Scheme) error) {
 	for _, f := range funcs {
 		*sb = append(*sb, f)
 	}
 }
 
-// NewSchemeBuilder calls Register for you.
+// NewSchemeBuilder calls RegisterTypes for you.
 func NewSchemeBuilder(funcs ...func(*Scheme) error) SchemeBuilder {
 	var sb SchemeBuilder
 	sb.Register(funcs...)

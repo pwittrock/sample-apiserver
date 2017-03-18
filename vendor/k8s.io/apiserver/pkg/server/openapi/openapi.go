@@ -260,7 +260,7 @@ func (o *openAPI) buildOperations(route restful.Route, inPathCommonParamsMap map
 		return ret, err
 	}
 
-	// Build responses
+	// build responses
 	for _, resp := range route.ResponseErrors {
 		ret.Responses.StatusCodeResponses[resp.Code], err = o.buildResponse(resp.Model, resp.Message)
 		if err != nil {
@@ -284,7 +284,7 @@ func (o *openAPI) buildOperations(route restful.Route, inPathCommonParamsMap map
 		ret.Responses.Default = o.config.DefaultResponse
 	}
 
-	// Build non-common Parameters
+	// build non-common Parameters
 	ret.Parameters = make([]spec.Parameter, 0)
 	for _, param := range route.ParameterDocs {
 		if _, isCommon := inPathCommonParamsMap[mapKeyFromParam(param)]; !isCommon {

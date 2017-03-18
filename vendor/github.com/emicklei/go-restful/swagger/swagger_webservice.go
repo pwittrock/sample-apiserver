@@ -23,7 +23,7 @@ func newSwaggerService(config Config) *SwaggerService {
 		config:            config,
 		apiDeclarationMap: new(ApiDeclarationList)}
 
-	// Build all ApiDeclarations
+	// build all ApiDeclarations
 	for _, each := range config.WebServices {
 		rootPath := each.RootPath()
 		// skip the api service itself

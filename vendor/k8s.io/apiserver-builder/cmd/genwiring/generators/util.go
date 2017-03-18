@@ -23,15 +23,36 @@ import (
 
 	"github.com/pkg/errors"
 
-	"k8s.io/gengo/generator"
 	"k8s.io/gengo/types"
-	//"github.com/golang/glog"
-	"k8s.io/apimachinery/pkg/util/sets"
 )
 
-func IsApiType(t *types.Type) bool {
+// IsAPIResource returns true if t has a +resource comment tag
+func IsAPIResource(t *types.Type) bool {
 	for _, c := range t.CommentLines {
-		if strings.Contains(c, "+genapi=true") {
+		if strings.Contains(c, "+resource") {
+			return true
+		}
+	}
+	return false
+}
+
+// IsAPISubresource returns true if t has a +subresource-request comment tag
+func IsAPISubresource(t *types.Type) bool {
+	for _, c := range t.CommentLines {
+		if strings.Contains(c, "+subresource-request") {
+			return true
+		}
+	}
+	return false
+}
+
+// HasSubresource returns true if t is an APIResource with one or more Subresources
+func HasSubresource(t *types.Type) bool {
+	if !IsAPIResource(t) {
+		return false
+	}
+	for _, c := range t.CommentLines {
+		if strings.Contains(c, "+subresource") {
 			return true
 		}
 	}
@@ -54,10 +75,6 @@ func GetVersion(t *types.Type, group string) string {
 	return filepath.Base(t.Name.Package)
 }
 
-func IsGroup(t *types.Type, group string) bool {
-	return GetGroup(t) == group
-}
-
 func GetGroup(t *types.Type) string {
 	return filepath.Base(GetGroupPackage(t))
 }
@@ -76,12 +93,16 @@ func GetKind(t *types.Type, group string) string {
 	return t.Name.Name
 }
 
+// IsApisDir returns true if a directory path is a Kubernetes api directory
 func IsApisDir(dir string) bool {
 	return dir == "apis" || dir == "api"
 }
 
+// Comments is a structure for using comment tags on go structs and fields
 type Comments []string
 
+// GetTags returns the value for the first comment with a prefix matching "+name="
+// e.g. "+name=foo\n+name=bar" would return "foo"
 func (c Comments) GetTag(name string) string {
 	for _, c := range c {
 		prefix := fmt.Sprintf("+%s=", name)
@@ -92,70 +113,15 @@ func (c Comments) GetTag(name string) string {
 	return ""
 }
 
-func GetApiTypes(c *generator.Context, group string) []*types.Type {
-	types := []*types.Type{}
-	for _, o := range c.Order {
-		if IsApiType(o) {
-			if IsGroup(o, group) {
-				types = append(types, o)
-			}
+// GetTags returns the value for all comments with a prefix matching "+name="
+// e.g. "+name=foo\n+name=bar" would return []string{"foo", "bar"}
+func (c Comments) GetTags(name string) []string {
+	tags := []string{}
+	for _, c := range c {
+		prefix := fmt.Sprintf("+%s=", name)
+		if strings.HasPrefix(c, prefix) {
+			tags = append(tags, strings.TrimLeft(c, prefix))
 		}
 	}
-	return types
-}
-
-func GetApiTypeNames(c *generator.Context, group string) []string {
-	types := []string{}
-	for _, o := range GetApiTypes(c, group) {
-		types = append(types, fmt.Sprintf("%s", o.Name.Name))
-		types = append(types, fmt.Sprintf("%sList", o.Name.Name))
-	}
-	return types
-}
-
-func GetIndexedTypes(context *generator.Context, group string) (map[string]map[string]*types.Type, map[string]map[string]*types.Type, sets.String) {
-	versionedApiTypes := sets.NewString()
-	unversionedApiTypes := sets.NewString()
-	for _, c := range context.Order {
-		if IsUnversioned(c, group) {
-			unversionedApiTypes.Insert(c.Name.Name)
-		}
-	}
-	for _, c := range context.Order {
-		if IsVersioned(c, group) && IsApiType(c) {
-			versionedApiTypes.Insert(c.Name.Name)
-		}
-	}
-
-	// Only keep api types
-	unversionedApiTypes = unversionedApiTypes.Intersection(versionedApiTypes)
-
-	// Find types that have versioned objects, but are missing unversioned objects
-	typesByVersionKind := map[string]map[string]*types.Type{}
-	typesByKindVersion := map[string]map[string]*types.Type{}
-	for _, c := range context.Order {
-		// Not in the group
-		if GetGroup(c) != group {
-			continue
-		}
-		// Not an api type
-		if !versionedApiTypes.Has(c.Name.Name) && !unversionedApiTypes.Has(c.Name.Name) {
-			continue
-		}
-
-		version := unversioned
-		if IsVersioned(c, group) {
-			version = GetVersion(c, group)
-		}
-		if _, f := typesByVersionKind[version]; !f {
-			typesByVersionKind[version] = map[string]*types.Type{}
-		}
-		if _, f := typesByKindVersion[c.Name.Name]; !f {
-			typesByKindVersion[c.Name.Name] = map[string]*types.Type{}
-		}
-		typesByVersionKind[version][c.Name.Name] = c
-		typesByKindVersion[c.Name.Name][version] = c
-	}
-
-	return typesByVersionKind, typesByKindVersion, unversionedApiTypes
+	return tags
 }

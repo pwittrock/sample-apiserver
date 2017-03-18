@@ -306,7 +306,7 @@ func (s *Scheme) AddIgnoredConversionType(from, to interface{}) error {
 // AddConversionFuncs adds functions to the list of conversion functions. The given
 // functions should know how to convert between two of your API objects, or their
 // sub-objects. We deduce how to call these functions from the types of their two
-// parameters; see the comment for Converter.Register.
+// parameters; see the comment for Converter.RegisterTypes.
 //
 // Note that, if you need to copy sub-objects that didn't change, you can use the
 // conversion.Scope object that will be passed to your conversion function.
@@ -327,7 +327,7 @@ func (s *Scheme) AddIgnoredConversionType(from, to interface{}) error {
 //	},
 // )
 //
-// (For more detail about conversion functions, see Converter.Register's comment.)
+// (For more detail about conversion functions, see Converter.RegisterTypes's comment.)
 //
 // Also note that the default behavior, if you don't add a conversion function, is to
 // sanely copy fields that have the same names and same type names. It's OK if the

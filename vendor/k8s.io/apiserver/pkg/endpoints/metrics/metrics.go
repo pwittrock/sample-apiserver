@@ -60,7 +60,7 @@ var (
 	)
 )
 
-// Register all metrics.
+// RegisterTypes all metrics.
 func Register() {
 	prometheus.MustRegister(requestCounter)
 	prometheus.MustRegister(requestLatencies)

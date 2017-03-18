@@ -402,7 +402,7 @@ const SizeofInotifyEvent = C.sizeof_struct_inotify_event
 
 // Ptrace
 
-// Register structures
+// RegisterTypes structures
 type PtraceRegs C.PtraceRegs
 
 // Structures contained in PtraceRegs on s390x (exported by mkpost.go)

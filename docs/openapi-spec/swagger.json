@@ -544,6 +544,235 @@
      }
     ]
    },
+   "/apis/hyrule.k8s.io/v1/namespaces/{namespace}/hyrulecastles/{name}/status": {
+    "get": {
+     "description": "read status of the specified HyruleCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "hyrule_v1"
+     ],
+     "operationId": "readHyruleV1NamespacedHyruleCastleStatus",
+     "parameters": [
+      {
+       "uniqueItems": true,
+       "type": "boolean",
+       "description": "Should the export be exact.  Exact export maintains cluster-specific fields like 'Namespace'.",
+       "name": "exact",
+       "in": "query"
+      },
+      {
+       "uniqueItems": true,
+       "type": "boolean",
+       "description": "Should this value be exported.  Export strips fields that a user can not specify.",
+       "name": "export",
+       "in": "query"
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.hyrule.v1.HyruleCastle"
+       }
+      }
+     }
+    },
+    "put": {
+     "description": "replace status of the specified HyruleCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "hyrule_v1"
+     ],
+     "operationId": "replaceHyruleV1NamespacedHyruleCastleStatus",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.hyrule.v1.HyruleCastle"
+       }
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.hyrule.v1.HyruleCastle"
+       }
+      }
+     }
+    },
+    "post": {
+     "description": "create status of a HyruleCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "hyrule_v1"
+     ],
+     "operationId": "createHyruleV1NamespacedHyruleCastleStatus",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.hyrule.v1.HyruleCastle"
+       }
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.hyrule.v1.HyruleCastle"
+       }
+      }
+     }
+    },
+    "delete": {
+     "description": "delete status of a HyruleCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "hyrule_v1"
+     ],
+     "operationId": "deleteHyruleV1NamespacedHyruleCastleStatus",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
+       }
+      },
+      {
+       "uniqueItems": true,
+       "type": "integer",
+       "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
+       "name": "gracePeriodSeconds",
+       "in": "query"
+      },
+      {
+       "uniqueItems": true,
+       "type": "boolean",
+       "description": "Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list.",
+       "name": "orphanDependents",
+       "in": "query"
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+       }
+      }
+     }
+    },
+    "patch": {
+     "description": "partially update status of the specified HyruleCastle",
+     "consumes": [
+      "application/json-patch+json",
+      "application/merge-patch+json",
+      "application/strategic-merge-patch+json"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "hyrule_v1"
+     ],
+     "operationId": "patchHyruleV1NamespacedHyruleCastleStatus",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+       }
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.hyrule.v1.HyruleCastle"
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "name of the HyruleCastle",
+      "name": "name",
+      "in": "path",
+      "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "object name and auth scope, such as for teams and projects",
+      "name": "namespace",
+      "in": "path",
+      "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "If 'true', then the output is pretty printed.",
+      "name": "pretty",
+      "in": "query"
+     }
+    ]
+   },
    "/apis/hyrule.k8s.io/v1/watch/hyrulecastles": {
     "get": {
      "description": "watch individual changes to a list of HyruleCastle",
@@ -790,69 +1019,9 @@
      }
     ]
    },
-   "/apis/wardle.k8s.io/": {
+   "/apis/hyrule.k8s.io/v1/watch/namespaces/{namespace}/hyrulecastles/{name}/status": {
     "get": {
-     "description": "get information of a group",
-     "consumes": [
-      "application/json",
-      "application/yaml",
-      "application/vnd.kubernetes.protobuf"
-     ],
-     "produces": [
-      "application/json",
-      "application/yaml",
-      "application/vnd.kubernetes.protobuf"
-     ],
-     "schemes": [
-      "https"
-     ],
-     "tags": [
-      "wardle"
-     ],
-     "operationId": "getWardleAPIGroup",
-     "responses": {
-      "200": {
-       "description": "OK",
-       "schema": {
-        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.APIGroup"
-       }
-      }
-     }
-    }
-   },
-   "/apis/wardle.k8s.io/v1alpha1/": {
-    "get": {
-     "description": "get available resources",
-     "consumes": [
-      "application/json",
-      "application/yaml",
-      "application/vnd.kubernetes.protobuf"
-     ],
-     "produces": [
-      "application/json",
-      "application/yaml",
-      "application/vnd.kubernetes.protobuf"
-     ],
-     "schemes": [
-      "https"
-     ],
-     "tags": [
-      "wardle_v1alpha1"
-     ],
-     "operationId": "getWardleV1alpha1APIResources",
-     "responses": {
-      "200": {
-       "description": "OK",
-       "schema": {
-        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
-       }
-      }
-     }
-    }
-   },
-   "/apis/wardle.k8s.io/v1alpha1/flunders": {
-    "get": {
-     "description": "list or watch objects of kind Flunder",
+     "description": "watch changes to status of an object of kind HyruleCastle",
      "consumes": [
       "*/*"
      ],
@@ -867,14 +1036,14 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "hyrule_v1"
      ],
-     "operationId": "listWardleV1alpha1FlunderForAllNamespaces",
+     "operationId": "watchHyruleV1NamespacedHyruleCastleStatus",
      "responses": {
       "200": {
        "description": "OK",
        "schema": {
-        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.FlunderList"
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
        }
       }
      }
@@ -893,6 +1062,22 @@
       "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
       "name": "labelSelector",
       "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "name of the HyruleCastle",
+      "name": "name",
+      "in": "path",
+      "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "object name and auth scope, such as for teams and projects",
+      "name": "namespace",
+      "in": "path",
+      "required": true
      },
      {
       "uniqueItems": true,
@@ -924,9 +1109,69 @@
      }
     ]
    },
-   "/apis/wardle.k8s.io/v1alpha1/namespaces/{namespace}/flunders": {
+   "/apis/mushroomkingdom.k8s.io/": {
     "get": {
-     "description": "list or watch objects of kind Flunder",
+     "description": "get information of a group",
+     "consumes": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom"
+     ],
+     "operationId": "getMushroomkingdomAPIGroup",
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.APIGroup"
+       }
+      }
+     }
+    }
+   },
+   "/apis/mushroomkingdom.k8s.io/v2/": {
+    "get": {
+     "description": "get available resources",
+     "consumes": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "getMushroomkingdomV2APIResources",
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.APIResourceList"
+       }
+      }
+     }
+    }
+   },
+   "/apis/mushroomkingdom.k8s.io/v2/namespaces/{namespace}/peachescastles": {
+    "get": {
+     "description": "list or watch objects of kind PeachesCastle",
      "consumes": [
       "*/*"
      ],
@@ -941,9 +1186,9 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "listWardleV1alpha1NamespacedFlunder",
+     "operationId": "listMushroomkingdomV2NamespacedPeachesCastle",
      "parameters": [
       {
        "uniqueItems": true,
@@ -985,13 +1230,13 @@
       "200": {
        "description": "OK",
        "schema": {
-        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.FlunderList"
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastleList"
        }
       }
      }
     },
     "post": {
-     "description": "create a Flunder",
+     "description": "create a PeachesCastle",
      "consumes": [
       "*/*"
      ],
@@ -1004,16 +1249,16 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "createWardleV1alpha1NamespacedFlunder",
+     "operationId": "createMushroomkingdomV2NamespacedPeachesCastle",
      "parameters": [
       {
        "name": "body",
        "in": "body",
        "required": true,
        "schema": {
-        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.Flunder"
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
        }
       }
      ],
@@ -1021,13 +1266,13 @@
       "200": {
        "description": "OK",
        "schema": {
-        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.Flunder"
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
        }
       }
      }
     },
     "delete": {
-     "description": "delete collection of Flunder",
+     "description": "delete collection of PeachesCastle",
      "consumes": [
       "*/*"
      ],
@@ -1040,9 +1285,9 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "deleteWardleV1alpha1CollectionNamespacedFlunder",
+     "operationId": "deleteMushroomkingdomV2CollectionNamespacedPeachesCastle",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1107,9 +1352,9 @@
      }
     ]
    },
-   "/apis/wardle.k8s.io/v1alpha1/namespaces/{namespace}/flunders/{name}": {
+   "/apis/mushroomkingdom.k8s.io/v2/namespaces/{namespace}/peachescastles/{name}": {
     "get": {
-     "description": "read the specified Flunder",
+     "description": "read the specified PeachesCastle",
      "consumes": [
       "*/*"
      ],
@@ -1122,9 +1367,9 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "readWardleV1alpha1NamespacedFlunder",
+     "operationId": "readMushroomkingdomV2NamespacedPeachesCastle",
      "parameters": [
       {
        "uniqueItems": true,
@@ -1145,13 +1390,13 @@
       "200": {
        "description": "OK",
        "schema": {
-        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.Flunder"
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
        }
       }
      }
     },
     "put": {
-     "description": "replace the specified Flunder",
+     "description": "replace the specified PeachesCastle",
      "consumes": [
       "*/*"
      ],
@@ -1164,16 +1409,16 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "replaceWardleV1alpha1NamespacedFlunder",
+     "operationId": "replaceMushroomkingdomV2NamespacedPeachesCastle",
      "parameters": [
       {
        "name": "body",
        "in": "body",
        "required": true,
        "schema": {
-        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.Flunder"
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
        }
       }
      ],
@@ -1181,13 +1426,13 @@
       "200": {
        "description": "OK",
        "schema": {
-        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.Flunder"
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
        }
       }
      }
     },
     "delete": {
-     "description": "delete a Flunder",
+     "description": "delete a PeachesCastle",
      "consumes": [
       "*/*"
      ],
@@ -1200,9 +1445,9 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "deleteWardleV1alpha1NamespacedFlunder",
+     "operationId": "deleteMushroomkingdomV2NamespacedPeachesCastle",
      "parameters": [
       {
        "name": "body",
@@ -1237,7 +1482,7 @@
      }
     },
     "patch": {
-     "description": "partially update the specified Flunder",
+     "description": "partially update the specified PeachesCastle",
      "consumes": [
       "application/json-patch+json",
       "application/merge-patch+json",
@@ -1252,9 +1497,9 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "patchWardleV1alpha1NamespacedFlunder",
+     "operationId": "patchMushroomkingdomV2NamespacedPeachesCastle",
      "parameters": [
       {
        "name": "body",
@@ -1269,7 +1514,7 @@
       "200": {
        "description": "OK",
        "schema": {
-        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.Flunder"
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
        }
       }
      }
@@ -1278,7 +1523,7 @@
      {
       "uniqueItems": true,
       "type": "string",
-      "description": "name of the Flunder",
+      "description": "name of the PeachesCastle",
       "name": "name",
       "in": "path",
       "required": true
@@ -1300,9 +1545,365 @@
      }
     ]
    },
-   "/apis/wardle.k8s.io/v1alpha1/watch/flunders": {
+   "/apis/mushroomkingdom.k8s.io/v2/namespaces/{namespace}/peachescastles/{name}/scalecastle": {
     "get": {
-     "description": "watch individual changes to a list of Flunder",
+     "description": "read scalecastle of the specified ScaleCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "readMushroomkingdomV2NamespacedScaleCastleScalecastle",
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.ScaleCastle"
+       }
+      }
+     }
+    },
+    "put": {
+     "description": "replace scalecastle of the specified ScaleCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "replaceMushroomkingdomV2NamespacedScaleCastleScalecastle",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.ScaleCastle"
+       }
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.ScaleCastle"
+       }
+      }
+     }
+    },
+    "patch": {
+     "description": "partially update scalecastle of the specified ScaleCastle",
+     "consumes": [
+      "application/json-patch+json",
+      "application/merge-patch+json",
+      "application/strategic-merge-patch+json"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "patchMushroomkingdomV2NamespacedScaleCastleScalecastle",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+       }
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.ScaleCastle"
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "name of the ScaleCastle",
+      "name": "name",
+      "in": "path",
+      "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "object name and auth scope, such as for teams and projects",
+      "name": "namespace",
+      "in": "path",
+      "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "If 'true', then the output is pretty printed.",
+      "name": "pretty",
+      "in": "query"
+     }
+    ]
+   },
+   "/apis/mushroomkingdom.k8s.io/v2/namespaces/{namespace}/peachescastles/{name}/status": {
+    "get": {
+     "description": "read status of the specified PeachesCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "readMushroomkingdomV2NamespacedPeachesCastleStatus",
+     "parameters": [
+      {
+       "uniqueItems": true,
+       "type": "boolean",
+       "description": "Should the export be exact.  Exact export maintains cluster-specific fields like 'Namespace'.",
+       "name": "exact",
+       "in": "query"
+      },
+      {
+       "uniqueItems": true,
+       "type": "boolean",
+       "description": "Should this value be exported.  Export strips fields that a user can not specify.",
+       "name": "export",
+       "in": "query"
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
+       }
+      }
+     }
+    },
+    "put": {
+     "description": "replace status of the specified PeachesCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "replaceMushroomkingdomV2NamespacedPeachesCastleStatus",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
+       }
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
+       }
+      }
+     }
+    },
+    "post": {
+     "description": "create status of a PeachesCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "createMushroomkingdomV2NamespacedPeachesCastleStatus",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
+       }
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
+       }
+      }
+     }
+    },
+    "delete": {
+     "description": "delete status of a PeachesCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "deleteMushroomkingdomV2NamespacedPeachesCastleStatus",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.DeleteOptions"
+       }
+      },
+      {
+       "uniqueItems": true,
+       "type": "integer",
+       "description": "The duration in seconds before the object should be deleted. Value must be non-negative integer. The value zero indicates delete immediately. If this value is nil, the default grace period for the specified type will be used. Defaults to a per object value if not specified. zero means delete immediately.",
+       "name": "gracePeriodSeconds",
+       "in": "query"
+      },
+      {
+       "uniqueItems": true,
+       "type": "boolean",
+       "description": "Should the dependent objects be orphaned. If true/false, the \"orphan\" finalizer will be added to/removed from the object's finalizers list.",
+       "name": "orphanDependents",
+       "in": "query"
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Status"
+       }
+      }
+     }
+    },
+    "patch": {
+     "description": "partially update status of the specified PeachesCastle",
+     "consumes": [
+      "application/json-patch+json",
+      "application/merge-patch+json",
+      "application/strategic-merge-patch+json"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "patchMushroomkingdomV2NamespacedPeachesCastleStatus",
+     "parameters": [
+      {
+       "name": "body",
+       "in": "body",
+       "required": true,
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.Patch"
+       }
+      }
+     ],
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "name of the PeachesCastle",
+      "name": "name",
+      "in": "path",
+      "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "object name and auth scope, such as for teams and projects",
+      "name": "namespace",
+      "in": "path",
+      "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "If 'true', then the output is pretty printed.",
+      "name": "pretty",
+      "in": "query"
+     }
+    ]
+   },
+   "/apis/mushroomkingdom.k8s.io/v2/peachescastles": {
+    "get": {
+     "description": "list or watch objects of kind PeachesCastle",
      "consumes": [
       "*/*"
      ],
@@ -1317,14 +1918,14 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "watchWardleV1alpha1FlunderListForAllNamespaces",
+     "operationId": "listMushroomkingdomV2PeachesCastleForAllNamespaces",
      "responses": {
       "200": {
        "description": "OK",
        "schema": {
-        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+        "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastleList"
        }
       }
      }
@@ -1374,9 +1975,9 @@
      }
     ]
    },
-   "/apis/wardle.k8s.io/v1alpha1/watch/namespaces/{namespace}/flunders": {
+   "/apis/mushroomkingdom.k8s.io/v2/watch/namespaces/{namespace}/peachescastles": {
     "get": {
-     "description": "watch individual changes to a list of Flunder",
+     "description": "watch individual changes to a list of PeachesCastle",
      "consumes": [
       "*/*"
      ],
@@ -1391,9 +1992,9 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "watchWardleV1alpha1NamespacedFlunderList",
+     "operationId": "watchMushroomkingdomV2NamespacedPeachesCastleList",
      "responses": {
       "200": {
        "description": "OK",
@@ -1456,9 +2057,9 @@
      }
     ]
    },
-   "/apis/wardle.k8s.io/v1alpha1/watch/namespaces/{namespace}/flunders/{name}": {
+   "/apis/mushroomkingdom.k8s.io/v2/watch/namespaces/{namespace}/peachescastles/{name}": {
     "get": {
-     "description": "watch changes to an object of kind Flunder",
+     "description": "watch changes to an object of kind PeachesCastle",
      "consumes": [
       "*/*"
      ],
@@ -1473,9 +2074,9 @@
       "https"
      ],
      "tags": [
-      "wardle_v1alpha1"
+      "mushroomkingdom_v2"
      ],
-     "operationId": "watchWardleV1alpha1NamespacedFlunder",
+     "operationId": "watchMushroomkingdomV2NamespacedPeachesCastle",
      "responses": {
       "200": {
        "description": "OK",
@@ -1503,7 +2104,7 @@
      {
       "uniqueItems": true,
       "type": "string",
-      "description": "name of the Flunder",
+      "description": "name of the PeachesCastle",
       "name": "name",
       "in": "path",
       "required": true
@@ -1515,6 +2116,170 @@
       "name": "namespace",
       "in": "path",
       "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "If 'true', then the output is pretty printed.",
+      "name": "pretty",
+      "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "When specified with a watch call, shows changes that occur after that particular version of a resource. Defaults to changes from the beginning of history. When specified for list: - if unset, then the result is returned from remote storage based on quorum-read flag; - if it's 0, then we simply return what we currently have in cache, no guarantee; - if set to non zero, then the result is at least as fresh as given rv.",
+      "name": "resourceVersion",
+      "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "integer",
+      "description": "Timeout for the list/watch call.",
+      "name": "timeoutSeconds",
+      "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "boolean",
+      "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+      "name": "watch",
+      "in": "query"
+     }
+    ]
+   },
+   "/apis/mushroomkingdom.k8s.io/v2/watch/namespaces/{namespace}/peachescastles/{name}/status": {
+    "get": {
+     "description": "watch changes to status of an object of kind PeachesCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf",
+      "application/json;stream=watch",
+      "application/vnd.kubernetes.protobuf;stream=watch"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "watchMushroomkingdomV2NamespacedPeachesCastleStatus",
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+      "name": "fieldSelector",
+      "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+      "name": "labelSelector",
+      "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "name of the PeachesCastle",
+      "name": "name",
+      "in": "path",
+      "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "object name and auth scope, such as for teams and projects",
+      "name": "namespace",
+      "in": "path",
+      "required": true
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "If 'true', then the output is pretty printed.",
+      "name": "pretty",
+      "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "When specified with a watch call, shows changes that occur after that particular version of a resource. Defaults to changes from the beginning of history. When specified for list: - if unset, then the result is returned from remote storage based on quorum-read flag; - if it's 0, then we simply return what we currently have in cache, no guarantee; - if set to non zero, then the result is at least as fresh as given rv.",
+      "name": "resourceVersion",
+      "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "integer",
+      "description": "Timeout for the list/watch call.",
+      "name": "timeoutSeconds",
+      "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "boolean",
+      "description": "Watch for changes to the described resources and return them as a stream of add, update, and remove notifications. Specify resourceVersion.",
+      "name": "watch",
+      "in": "query"
+     }
+    ]
+   },
+   "/apis/mushroomkingdom.k8s.io/v2/watch/peachescastles": {
+    "get": {
+     "description": "watch individual changes to a list of PeachesCastle",
+     "consumes": [
+      "*/*"
+     ],
+     "produces": [
+      "application/json",
+      "application/yaml",
+      "application/vnd.kubernetes.protobuf",
+      "application/json;stream=watch",
+      "application/vnd.kubernetes.protobuf;stream=watch"
+     ],
+     "schemes": [
+      "https"
+     ],
+     "tags": [
+      "mushroomkingdom_v2"
+     ],
+     "operationId": "watchMushroomkingdomV2PeachesCastleListForAllNamespaces",
+     "responses": {
+      "200": {
+       "description": "OK",
+       "schema": {
+        "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent"
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "A selector to restrict the list of returned objects by their fields. Defaults to everything.",
+      "name": "fieldSelector",
+      "in": "query"
+     },
+     {
+      "uniqueItems": true,
+      "type": "string",
+      "description": "A selector to restrict the list of returned objects by their labels. Defaults to everything.",
+      "name": "labelSelector",
+      "in": "query"
      },
      {
       "uniqueItems": true,
@@ -1636,8 +2401,7 @@
      }
     }
    },
-   "com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.Flunder": {
-    "description": "Flunder does some cool stuff",
+   "com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle": {
     "properties": {
      "apiVersion": {
       "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#resources",
@@ -1651,14 +2415,14 @@
       "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
      },
      "spec": {
-      "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.FlunderSpec"
+      "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastleSpec"
      },
      "status": {
-      "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.FlunderStatus"
+      "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastleStatus"
      }
     }
    },
-   "com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.FlunderList": {
+   "com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastleList": {
     "required": [
      "items"
     ],
@@ -1670,7 +2434,7 @@
      "items": {
       "type": "array",
       "items": {
-       "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.Flunder"
+       "$ref": "#/definitions/com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastle"
       }
      },
      "kind": {
@@ -1682,17 +2446,29 @@
      }
     }
    },
-   "com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.FlunderSpec": {
-    "required": [
-     "A"
-    ],
+   "com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastleSpec": {
     "properties": {
-     "A": {
-      "type": "string"
+     "mushrooms": {
+      "type": "integer",
+      "format": "int32"
      }
     }
    },
-   "com.github.pwittrock.apiserver-helloworld.apis.wardle.v1alpha1.FlunderStatus": {},
+   "com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.PeachesCastleStatus": {},
+   "com.github.pwittrock.apiserver-helloworld.apis.mushroomkingdom.v2.ScaleCastle": {
+    "required": [
+     "TypeMeta"
+    ],
+    "properties": {
+     "ObjectMeta": {
+      "description": "Standard object metadata; More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata.",
+      "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta"
+     },
+     "TypeMeta": {
+      "$ref": "#/definitions/io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta"
+     }
+    }
+   },
    "io.k8s.apimachinery.pkg.apis.meta.v1.APIGroup": {
     "description": "APIGroup contains the name, the supported versions, and the preferred version of a group.",
     "required": [
@@ -2103,6 +2879,19 @@
    "io.k8s.apimachinery.pkg.apis.meta.v1.Time": {
     "type": "string",
     "format": "date-time"
+   },
+   "io.k8s.apimachinery.pkg.apis.meta.v1.TypeMeta": {
+    "description": "TypeMeta describes an individual object in an API response or request with strings representing the type of the object and its API schema version. Structures that are versioned or persisted should inline TypeMeta.",
+    "properties": {
+     "apiVersion": {
+      "description": "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#resources",
+      "type": "string"
+     },
+     "kind": {
+      "description": "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#types-kinds",
+      "type": "string"
+     }
+    }
    },
    "io.k8s.apimachinery.pkg.apis.meta.v1.WatchEvent": {
     "description": "Event represents a single event to a watched resource.",

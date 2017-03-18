@@ -111,11 +111,11 @@ type GroupMetaFactory struct {
 	// map of version name to version factory
 	VersionArgs map[string]*GroupVersionFactoryArgs
 
-	// assembled by Register()
+	// assembled by RegisterTypes()
 	prioritizedVersionList []schema.GroupVersion
 }
 
-// Register constructs the finalized prioritized version list and sanity checks
+// RegisterTypes constructs the finalized prioritized version list and sanity checks
 // the announced group & versions. Then it calls register.
 func (gmf *GroupMetaFactory) Register(m *registered.APIRegistrationManager) error {
 	if gmf.GroupArgs == nil {

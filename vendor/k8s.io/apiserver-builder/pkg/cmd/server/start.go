@@ -24,48 +24,54 @@ import (
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver-builder/pkg/apiserver"
-	"k8s.io/apiserver-builder/pkg/defaults"
+	"k8s.io/apiserver-builder/pkg/builders"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 
-	generatedopenapi "github.com/pwittrock/apiserver-helloworld/pkg/openapi"
+	"github.com/golang/glog"
+	"k8s.io/apimachinery/pkg/openapi"
+	"k8s.io/client-go/pkg/api"
 )
 
-const defaultEtcdPathPrefix = "/registry/wardle.kubernetes.io"
+const defaultEtcdPathPrefix = "/registry/sample.kubernetes.io"
 
-type WardleServerOptions struct {
+var GetOpenApiDefinition openapi.GetOpenAPIDefinitions
+
+type ServerOptions struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
 
-	StdOut       io.Writer
-	StdErr       io.Writer
-	APIProviders []defaults.ResourceDefinitionProvider
+	StdOut      io.Writer
+	StdErr      io.Writer
+	APIBuilders []*builders.APIGroupBuilder
 }
 
-func NewWardleServerOptions(out, errOut io.Writer, providers []defaults.ResourceDefinitionProvider) *WardleServerOptions {
+func NewServerOptions(out, errOut io.Writer, builders []*builders.APIGroupBuilder) *ServerOptions {
 	versions := []schema.GroupVersion{}
-	for _, p := range providers {
-		versions = append(versions, p.GetLegacyCodec()...)
+	for _, b := range builders {
+		versions = append(versions, b.GetLegacyCodec()...)
 	}
 
-	o := &WardleServerOptions{
-		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, defaults.Scheme, defaults.Codecs.LegacyCodec(versions...)),
+	o := &ServerOptions{
+		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, api.Scheme, api.Codecs.LegacyCodec(versions...)),
 
-		StdOut:       out,
-		StdErr:       errOut,
-		APIProviders: providers,
+		StdOut:      out,
+		StdErr:      errOut,
+		APIBuilders: builders,
 	}
 	o.RecommendedOptions.SecureServing.ServingOptions.BindPort = 443
 
 	return o
 }
 
+var printBearerToken = false
+
 // NewCommandStartMaster provides a CLI handler for 'start master' command
-func NewCommandStartWardleServer(out, errOut io.Writer, providers []defaults.ResourceDefinitionProvider, stopCh <-chan struct{}) *cobra.Command {
-	o := NewWardleServerOptions(out, errOut, providers)
+func NewCommandStartServer(out, errOut io.Writer, builders []*builders.APIGroupBuilder, stopCh <-chan struct{}) *cobra.Command {
+	o := NewServerOptions(out, errOut, builders)
 
 	cmd := &cobra.Command{
-		Short: "Launch a wardle API server",
-		Long:  "Launch a wardle API server",
+		Short: "Launch an API server",
+		Long:  "Launch an API server",
 		RunE: func(c *cobra.Command, args []string) error {
 			if err := o.Complete(); err != nil {
 				return err
@@ -73,7 +79,7 @@ func NewCommandStartWardleServer(out, errOut io.Writer, providers []defaults.Res
 			if err := o.Validate(args); err != nil {
 				return err
 			}
-			if err := o.RunWardleServer(stopCh); err != nil {
+			if err := o.RunServer(stopCh); err != nil {
 				return err
 			}
 			return nil
@@ -81,26 +87,28 @@ func NewCommandStartWardleServer(out, errOut io.Writer, providers []defaults.Res
 	}
 
 	flags := cmd.Flags()
+	flags.BoolVar(&printBearerToken, "print-bearer-token", false,
+		"If true, print a curl command with the bearer token to test the server")
 	o.RecommendedOptions.AddFlags(flags)
 
 	return cmd
 }
 
-func (o WardleServerOptions) Validate(args []string) error {
+func (o ServerOptions) Validate(args []string) error {
 	return nil
 }
 
-func (o *WardleServerOptions) Complete() error {
+func (o *ServerOptions) Complete() error {
 	return nil
 }
 
-func (o WardleServerOptions) Config() (*apiserver.Config, error) {
+func (o ServerOptions) Config() (*apiserver.Config, error) {
 	// TODO have a "real" external address
 	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("localhost"); err != nil {
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
 
-	serverConfig := genericapiserver.NewConfig().WithSerializer(defaults.Codecs)
+	serverConfig := genericapiserver.NewConfig().WithSerializer(api.Codecs)
 	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
 		return nil, err
 	}
@@ -111,18 +119,46 @@ func (o WardleServerOptions) Config() (*apiserver.Config, error) {
 	return config, nil
 }
 
-func (o WardleServerOptions) RunWardleServer(stopCh <-chan struct{}) error {
+func (o ServerOptions) SetAuthOptions() error {
+	return nil
+	//config, err := o.Config()
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//config.GenericConfig.LoopbackClientConfig =
+	//authorizationConfig := s.Authorization.ToAuthorizationConfig(sharedInformers)
+	//
+	//apiAuthenticator, securityDefinitions, err := authenticatorConfig.New()
+	//if err != nil {
+	//	return nil, nil, fmt.Errorf("invalid authentication config: %v", err)
+	//}
+	//
+	//apiAuthorizer, err := authorizationConfig.New()
+	//config.GenericConfig.Authenticator
+}
+
+func (o ServerOptions) RunServer(stopCh <-chan struct{}) error {
 	config, err := o.Config()
 	if err != nil {
 		return err
 	}
 
-	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(generatedopenapi.GetOpenAPIDefinitions, defaults.Scheme)
+	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(GetOpenApiDefinition, api.Scheme)
 	//config.GenericConfig.OpenAPIConfig.PostProcessSpec = postProcessOpenAPISpecForBackwardCompatibility
 	//config.GenericConfig.OpenAPIConfig.SecurityDefinitions = securityDefinitions
-	config.GenericConfig.OpenAPIConfig.Info.Title = "Wardle"
+	config.GenericConfig.OpenAPIConfig.Info.Title = "Api"
 
-	for _, provider := range o.APIProviders {
+	if printBearerToken {
+		glog.Infof("Serving on loopback...")
+		glog.Infof("\n\n********************************\nTo test the server run:\n"+
+			"curl -k -H \"Authorization: Bearer %s\" %s\n********************************\n\n",
+			config.GenericConfig.LoopbackClientConfig.BearerToken,
+			config.GenericConfig.LoopbackClientConfig.Host)
+		glog.Infof("Local Authorization Token: %s", config.GenericConfig.LoopbackClientConfig.BearerToken)
+	}
+
+	for _, provider := range o.APIBuilders {
 		config.AddApi(provider)
 	}
 

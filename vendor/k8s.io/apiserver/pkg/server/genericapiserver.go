@@ -246,7 +246,7 @@ func (s *GenericAPIServer) InstallLegacyAPIGroup(apiPrefix string, apiGroupInfo 
 	for _, groupVersion := range apiGroupInfo.GroupMeta.GroupVersions {
 		apiVersions = append(apiVersions, groupVersion.Version)
 	}
-	// Install the version handler.
+	// Announce the version handler.
 	// Add a handler at /<apiPrefix> to enumerate the supported api versions.
 	genericapi.AddApiWebService(s.Serializer, s.HandlerContainer.Container, apiPrefix, func(req *restful.Request) *metav1.APIVersions {
 		clientIP := utilnet.GetClientIP(req.Request)
@@ -276,7 +276,7 @@ func (s *GenericAPIServer) InstallAPIGroup(apiGroupInfo *APIGroupInfo) error {
 	}
 
 	// setup discovery
-	// Install the version handler.
+	// Announce the version handler.
 	// Add a handler at /apis/<groupName> to enumerate all versions supported by this group.
 	apiVersionsForDiscovery := []metav1.GroupVersionForDiscovery{}
 	for _, groupVersion := range apiGroupInfo.GroupMeta.GroupVersions {

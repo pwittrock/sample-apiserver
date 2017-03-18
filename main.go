@@ -21,15 +21,15 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/pwittrock/apiserver-helloworld/apis"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver-builder/pkg/cmd/server"
-	"k8s.io/apiserver-builder/pkg/defaults"
 	"k8s.io/apiserver/pkg/util/logs"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+
+	"github.com/pwittrock/apiserver-helloworld/pkg/apis"
+	"github.com/pwittrock/apiserver-helloworld/pkg/openapi"
 )
 
-//go:generate go run vendor/k8s.io/apiserver-builder/cmd/genwiring/main.go --input-dirs ./apis/...
 func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
@@ -38,8 +38,11 @@ func main() {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
 
-	providers := []defaults.ResourceDefinitionProvider{apis.GetWardleProvider(), apis.GetHyruleProvider()}
-	cmd := server.NewCommandStartWardleServer(os.Stdout, os.Stderr, providers, wait.NeverStop)
+	// RegisterTypes the openapi
+	server.GetOpenApiDefinition = openapi.GetOpenAPIDefinitions
+
+	// To disable providers, manually specify the list provided by getKnownProviders()
+	cmd := server.NewCommandStartServer(os.Stdout, os.Stderr, apis.GetAllApiBuilders(), wait.NeverStop)
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 	if err := cmd.Execute(); err != nil {
 		panic(err)

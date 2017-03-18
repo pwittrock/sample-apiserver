@@ -96,6 +96,8 @@ func NewReflector(lw ListerWatcher, expectedType interface{}, store Store, resyn
 
 // NewNamedReflector same as NewReflector, but with a specified name for logging
 func NewNamedReflector(name string, lw ListerWatcher, expectedType interface{}, store Store, resyncPeriod time.Duration) *Reflector {
+	//debug.PrintStack()
+	//fmt.Printf("pwittroc - New reflector: %s %T\n\n", name, expectedType)
 	r := &Reflector{
 		name:          name,
 		listerWatcher: lw,

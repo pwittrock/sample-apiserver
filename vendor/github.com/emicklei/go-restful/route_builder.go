@@ -186,7 +186,7 @@ func (b *RouteBuilder) copyDefaults(rootProduces, rootConsumes []string) {
 	}
 }
 
-// Build creates a new Route using the specification details collected by the RouteBuilder
+// build creates a new Route using the specification details collected by the RouteBuilder
 func (b *RouteBuilder) Build() Route {
 	pathExpr, err := newPathExpression(b.currentPath)
 	if err != nil {

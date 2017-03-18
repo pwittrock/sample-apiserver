@@ -66,9 +66,9 @@ var (
 
 var registerMetrics sync.Once
 
-// Register all metrics.
+// RegisterTypes all metrics.
 func Register() {
-	// Register the metrics.
+	// RegisterTypes the metrics.
 	registerMetrics.Do(func() {
 		prometheus.MustRegister(cacheHitCounter)
 		prometheus.MustRegister(cacheMissCounter)

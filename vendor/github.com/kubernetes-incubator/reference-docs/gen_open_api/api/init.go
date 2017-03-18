@@ -52,7 +52,7 @@ func (definitions Definitions) initInlinedDefinitions() Definitions {
 	return definitions
 }
 
-// Build the "Appears In" index for definitions
+// build the "Appears In" index for definitions
 func (definitions Definitions) initAppearsIn() Definitions {
 	for _, d := range definitions.GetAllDefinitions() {
 		for _, child := range getDefinitionFieldDefinitions(d, definitions) {

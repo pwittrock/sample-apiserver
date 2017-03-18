@@ -30,7 +30,7 @@ type Swagger struct {
 	Config *swagger.Config
 }
 
-// Install adds the SwaggerUI webservice to the given mux.
+// Announce adds the SwaggerUI webservice to the given mux.
 func (s Swagger) Install(c *mux.APIContainer) {
 	s.Config.WebServices = c.RegisteredWebServices()
 	swagger.RegisterSwaggerService(*s.Config, c.Container)

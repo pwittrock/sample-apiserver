@@ -17,120 +17,77 @@ limitations under the License.
 package generators
 
 import (
-	"bytes"
-	"fmt"
 	"io"
-	"strings"
 
-	"k8s.io/gengo/args"
 	"k8s.io/gengo/generator"
-	"k8s.io/gengo/namer"
-	"k8s.io/gengo/types"
+	"text/template"
 )
 
 type versionedGenerator struct {
 	generator.DefaultGen
-	pkg          *types.Package
-	version      string
-	group        string
-	domain       string
-	apiTypeNames []string
+	apiversion *APIVersion
+	apigroup   *APIGroup
 }
 
 var _ generator.Generator = &versionedGenerator{}
 
-func CreateVersionedGenerator(
-	c *generator.Context, pkg *types.Package, arguments *args.GeneratorArgs,
-	group string, version string, domain string) generator.Generator {
+func CreateVersionedGenerator(apiversion *APIVersion, apigroup *APIGroup, filename string) generator.Generator {
 	return &versionedGenerator{
-		generator.DefaultGen{OptionalName: arguments.OutputFileBaseName},
-		pkg,
-		version,
-		group,
-		domain,
-		GetApiTypeNames(c, group),
+		generator.DefaultGen{OptionalName: filename},
+		apiversion,
+		apigroup,
 	}
 }
 
-func (d *versionedGenerator) Filter(c *generator.Context, t *types.Type) bool {
-	return true
-}
-func (d *versionedGenerator) Namers(c *generator.Context) namer.NameSystems {
-	return nil
-}
 func (d *versionedGenerator) Imports(c *generator.Context) []string {
 	return []string{
 		"metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"",
 		"k8s.io/apimachinery/pkg/runtime",
-		"k8s.io/apimachinery/pkg/runtime/schema"}
-}
-
-func (d *versionedGenerator) PackageVars(c *generator.Context) []string {
-	vars := []string{}
-	buffer := &bytes.Buffer{}
-
-	apiTypes := d.apiTypeNames
-	types := []string{}
-	for _, n := range apiTypes {
-		types = append(types, fmt.Sprintf("&%s{}", n))
+		"k8s.io/apiserver-builder/pkg/builders",
+		d.apigroup.Pkg.Path,
 	}
-
-	t := strings.Join(types, ", ")
-	sw := generator.NewSnippetWriter(buffer, c, "$", "$")
-	sw.Do(fmt.Sprintf(`registerFn = func(scheme *runtime.Scheme) error {
-		scheme.AddKnownTypes(SchemeGroupVersion, %s)
-		metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
-		return nil
-	}%s`, t, "\n"), nil)
-	vars = append(vars, buffer.String())
-	buffer.Reset()
-
-	sw = generator.NewSnippetWriter(buffer, c, "$", "$")
-	sw.Do("SchemeGroupVersion = schema.GroupVersion{Group, Version}\n", nil)
-	vars = append(vars, buffer.String())
-	buffer.Reset()
-
-	sw = generator.NewSnippetWriter(buffer, c, "$", "$")
-	sw.Do("SchemeBuilder = runtime.NewSchemeBuilder(registerFn)\n", nil)
-	vars = append(vars, buffer.String())
-	buffer.Reset()
-
-	sw = generator.NewSnippetWriter(buffer, c, "$", "$")
-	sw.Do("AddToScheme = SchemeBuilder.AddToScheme\n", nil)
-	vars = append(vars, buffer.String())
-	buffer.Reset()
-
-	return vars
 }
 
-func (d *versionedGenerator) PackageConsts(c *generator.Context) []string {
-	consts := []string{}
-
-	buffer := &bytes.Buffer{}
-	sw := generator.NewSnippetWriter(buffer, c, "$", "$")
-	sw.Do(fmt.Sprintf("Group = \"%s.%s\"", d.group, d.domain), nil)
-	consts = append(consts, buffer.String())
-
-	buffer.Reset()
-	sw = generator.NewSnippetWriter(buffer, c, "$", "$")
-	sw.Do(fmt.Sprintf("Version = \"%s\"", d.version), nil)
-	consts = append(consts, buffer.String())
-
-	return consts
+func (d *versionedGenerator) Finalize(context *generator.Context, w io.Writer) error {
+	temp := template.Must(template.New("versioned-template").Parse(VersionedAPITemplate))
+	return temp.Execute(w, d.apiversion)
 }
 
-const listType = "type %sList struct { \n" +
-	"    metav1.TypeMeta `json:\",inline\"` \n" +
-	"    metav1.ListMeta `json:\"metadata,omitempty\" protobuf:\"bytes,1,opt,name=metadata\"` \n" +
-	"    Items []%s `json:\"items\" protobuf:\"bytes,2,rep,name=items\"`\n" +
-	"}\n\n"
+var VersionedAPITemplate = `
+var (
+	ApiVersion = builders.NewVersionedApiBuilder("{{.Group}}.{{.Domain}}", "{{.Version}}").WithResources(
+		{{ range $api := .Resources -}}
+		builders.NewVersionedResourceWithStorage( //  Resource endpoint
+			{{ $api.Group }}.{{ $api.Kind }}Singleton,
+			func() runtime.Object { return &{{ $api.Kind }}{} },     // Register versioned resource
+			func() runtime.Object { return &{{ $api.Kind }}List{} }, // Register versioned resource list
+			&{{ $api.Group }}.{{ $api.Kind }}Strategy{builders.StorageStrategySingleton},
+		),
+		builders.NewVersionedResourceWithStorage( // Resource status endpoint
+			{{ $api.Group }}.{{ $api.Kind }}StatusSingleton,
+			func() runtime.Object { return &{{ $api.Kind }}{} },     // Register versioned resource
+			func() runtime.Object { return &{{ $api.Kind }}List{} }, // Register versioned resource list
+			&{{ $api.Group }}.{{ $api.Kind }}StatusStrategy{builders.StatusStorageStrategySingleton},
+		),
+		{{ range $subresource := $api.Subresources -}}
+		builders.NewVersionedResourceWithoutStorage(
+			{{ $api.Group }}.{{ $subresource.REST }}Singleton,
+			func() runtime.Object { return &{{ $subresource.Request }}{} }, // Register versioned resource
+			&{{ $api.Group }}.{{ $subresource.REST }}{},
+		),
+		{{ end -}}
+		{{ end -}}
+	)
 
-func (d *versionedGenerator) GenerateType(c *generator.Context, t *types.Type, w io.Writer) error {
-	if !IsApiType(t) || !IsGroup(t, d.group) {
-		return nil
-	}
-	name := t.Name.Name
-	sw := generator.NewSnippetWriter(w, c, "$", "$")
-	sw.Do(fmt.Sprintf(listType, name, name), nil)
-	return nil
+	// Expected by generated deepcopy and conversion
+	SchemeBuilder = ApiVersion.SchemaBuilder
+)
+
+{{ range $api := .Resources -}}
+type {{$api.Kind}}List struct {
+	metav1.TypeMeta ` + "`json:\",inline\"`" + `
+	metav1.ListMeta ` + "`json:\"metadata,omitempty\"`" + `
+	Items           []{{$api.Kind}} ` + "`json:\"items\"`" + `
 }
+{{ end -}}
+`

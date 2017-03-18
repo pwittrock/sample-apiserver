@@ -27,7 +27,6 @@ import (
 	"k8s.io/gengo/types"
 
 	"github.com/pkg/errors"
-	"os"
 )
 
 // CustomArgs is used tby the go2idl framework to pass args specific to this
@@ -59,12 +58,13 @@ func (g *Gen) NameSystems() namer.NameSystems {
 	}
 }
 
-func (g *Gen) ParsePackages(context *generator.Context, arguments *args.GeneratorArgs) (sets.String, sets.String, string) {
+func (g *Gen) ParsePackages(context *generator.Context, arguments *args.GeneratorArgs) (sets.String, sets.String, string, string) {
 	versionedPkgs := sets.NewString()
 	unversionedPkgs := sets.NewString()
+	mainPkg := ""
 	apisPkg := ""
 	for _, o := range context.Order {
-		if IsApiType(o) {
+		if IsAPIResource(o) {
 			versioned := o.Name.Package
 			versionedPkgs.Insert(versioned)
 			unversioned := filepath.Dir(versioned)
@@ -75,94 +75,33 @@ func (g *Gen) ParsePackages(context *generator.Context, arguments *args.Generato
 					"Found multiple apis directory paths: %v and %v", apisPkg, apis))
 			} else {
 				apisPkg = apis
+				mainPkg = filepath.Dir(apisPkg)
 			}
 		}
 	}
-	return versionedPkgs, unversionedPkgs, apisPkg
-}
-
-func (g *Gen) CleanUp(context *generator.Context, arguments *args.GeneratorArgs) error {
-	//glog.Infof("DIRS: %v", arguments.InputDirs)
-	for _, d := range arguments.InputDirs {
-		if strings.HasSuffix(d, "/...") {
-			d = strings.TrimSuffix(d, "/...")
-		}
-		err := filepath.Walk(d, func(path string, info os.FileInfo, err error) error {
-			if info.IsDir() || !strings.HasPrefix(info.Name(), "zz_generated.api.") {
-				// Only delete files we generate
-				return nil
-			}
-			//glog.Infof("Deleting %v", path)
-			return os.Remove(path)
-		})
-		if err != nil {
-			return err
-		}
-	}
-	return nil
+	return versionedPkgs, unversionedPkgs, apisPkg, mainPkg
 }
 
 func (g *Gen) Packages(context *generator.Context, arguments *args.GeneratorArgs) generator.Packages {
-	err := g.CleanUp(context, arguments)
-	if err != nil {
-		panic(errors.Errorf("Could not cleanup old generated files: %v", err))
-	}
-
 	g.p = generator.Packages{}
 
-	// Do the versioned packages
-	versionedPkgs, unversionedPkgs, apisPkg := g.ParsePackages(context, arguments)
-	pkg := context.Universe[apisPkg]
-	if pkg == nil {
-		// If the input had no Go files, for example.
-		panic(errors.Errorf("Missing apis package."))
-	}
-	comments := Comments(pkg.Comments)
-	domain := comments.GetTag("domain")
+	b := NewAPIsBuilder(context, arguments)
+	for _, apigroup := range b.APIs.Groups {
+		for _, apiversion := range apigroup.Versions {
+			factory := &packageFactory{apiversion.Pkg, arguments}
+			gen := CreateVersionedGenerator(apiversion, apigroup, arguments.OutputFileBaseName)
+			g.p = append(g.p, factory.createPackage(gen))
 
-	groups := []string{}
-
-	for p := range versionedPkgs {
-		//glog.Infof("Considering versioned pkg %q", p)
-		pkg := context.Universe[p]
-		if pkg == nil {
-			// If the input had no Go files, for example.
-			continue
 		}
-		factory := &packageFactory{pkg, arguments}
-		version := filepath.Base(p)
-		group := filepath.Base(filepath.Dir(p))
-		gen := CreateVersionedGenerator(context, pkg, arguments, group, version, domain)
+
+		factory := &packageFactory{apigroup.Pkg, arguments}
+		gen := CreateUnversionedGenerator(apigroup, arguments.OutputFileBaseName)
 		g.p = append(g.p, factory.createPackage(gen))
-
-		groups = append(groups, group)
 	}
 
-	// Do the unversioned packages
-	for p := range unversionedPkgs {
-		//glog.Infof("Considering unversioned pkg %q", p)
-		pkg := context.Universe[p]
-		if pkg == nil {
-			// If the input had no Go files, for example.
-			continue
-		}
-		factory := &packageFactory{pkg, arguments}
-		group := filepath.Base(p)
-		g.p = append(g.p, factory.createPackage(CreateUnversionedGenerator(
-			context, pkg, arguments, group, domain)))
-	}
-
-	// Do the base Api package
-	pkg = context.Universe[apisPkg]
-	if pkg != nil {
-		//glog.Infof("Considering apis pkg %q", apisPkg)
-		for _, group := range groups {
-			factory := &packageFactory{pkg, arguments}
-			g.p = append(g.p, factory.createPackage(CreateApisGenerator(
-				context, pkg, group, domain)))
-		}
-	}
-
+	factory := &packageFactory{b.APIs.Pkg, arguments}
+	gen := CreateApisGenerator(b.APIs, arguments.OutputFileBaseName)
+	g.p = append(g.p, factory.createPackage(gen))
 	return g.p
 }
 

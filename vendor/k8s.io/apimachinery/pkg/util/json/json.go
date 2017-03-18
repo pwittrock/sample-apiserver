@@ -39,7 +39,7 @@ func Marshal(v interface{}) ([]byte, error) {
 func Unmarshal(data []byte, v interface{}) error {
 	switch v := v.(type) {
 	case *map[string]interface{}:
-		// Build a decoder from the given data
+		// build a decoder from the given data
 		decoder := json.NewDecoder(bytes.NewBuffer(data))
 		// Preserve numbers, rather than casting to float64 automatically
 		decoder.UseNumber()

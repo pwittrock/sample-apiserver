@@ -98,7 +98,7 @@ func UninstrumentedHandler() http.Handler {
 	return defRegistry
 }
 
-// Register registers a new Collector to be included in metrics collection. It
+// RegisterTypes registers a new Collector to be included in metrics collection. It
 // returns an error if the descriptors provided by the Collector are invalid or
 // if they - in combination with descriptors of already registered Collectors -
 // do not fulfill the consistency and uniqueness criteria described in the Desc
@@ -112,7 +112,7 @@ func Register(m Collector) error {
 	return err
 }
 
-// MustRegister works like Register but panics where Register would have
+// MustRegister works like RegisterTypes but panics where RegisterTypes would have
 // returned an error.
 func MustRegister(m Collector) {
 	err := Register(m)
@@ -121,20 +121,20 @@ func MustRegister(m Collector) {
 	}
 }
 
-// RegisterOrGet works like Register but does not return an error if a Collector
+// RegisterOrGet works like RegisterTypes but does not return an error if a Collector
 // is registered that equals a previously registered Collector. (Two Collectors
 // are considered equal if their Describe method yields the same set of
 // descriptors.) Instead, the previously registered Collector is returned (which
 // is helpful if the new and previously registered Collectors are equal but not
 // identical, i.e. not pointers to the same object).
 //
-// As for Register, it is still not safe to call RegisterOrGet with the same
+// As for RegisterTypes, it is still not safe to call RegisterOrGet with the same
 // Collector multiple times concurrently.
 func RegisterOrGet(m Collector) (Collector, error) {
 	return defRegistry.RegisterOrGet(m)
 }
 
-// MustRegisterOrGet works like Register but panics where RegisterOrGet would
+// MustRegisterOrGet works like RegisterTypes but panics where RegisterOrGet would
 // have returned an error.
 func MustRegisterOrGet(m Collector) Collector {
 	existing, err := RegisterOrGet(m)

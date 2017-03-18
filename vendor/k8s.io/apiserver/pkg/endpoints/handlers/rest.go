@@ -608,7 +608,7 @@ func patchResource(
 		default:
 			// on a conflict,
 			// 1. build a strategic merge patch from originalJS and the patchedJS.  Different patch types can
-			//    be specified, but a strategic merge patch should be expressive enough handle them.  Build the
+			//    be specified, but a strategic merge patch should be expressive enough handle them.  build the
 			//    patch with this type to handle those cases.
 			// 2. build a strategic merge patch from originalJS and the currentJS
 			// 3. ensure no conflicts between the two patches

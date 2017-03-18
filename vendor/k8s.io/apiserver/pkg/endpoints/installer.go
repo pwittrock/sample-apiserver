@@ -93,7 +93,7 @@ func (a *APIInstaller) Install(ws *restful.WebService) (apiResources []metav1.AP
 		Mapper:     a.group.Context,
 	})
 
-	// Register the paths in a deterministic (sorted) order to get a deterministic swagger spec.
+	// RegisterTypes the paths in a deterministic (sorted) order to get a deterministic swagger spec.
 	paths := make([]string, len(a.group.Storage))
 	var i int = 0
 	for path := range a.group.Storage {

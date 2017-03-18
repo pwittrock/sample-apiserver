@@ -11,7 +11,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Build only when actually fuzzing
+// build only when actually fuzzing
 // +build gofuzz
 
 package expfmt

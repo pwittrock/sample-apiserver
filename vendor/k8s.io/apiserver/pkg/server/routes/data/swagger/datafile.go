@@ -3661,7 +3661,7 @@ Handlebars.Exception = function(message) {
 };
 Handlebars.Exception.prototype = new Error();
 
-// Build out our basic SafeString type
+// build out our basic SafeString type
 Handlebars.SafeString = function(string) {
   this.string = string;
 };
@@ -6733,14 +6733,14 @@ Content.registerProcessor = function(types,processor) {
   }
 };
 
-// Register the identity processor, which is used for text-based media types.
+// RegisterTypes the identity processor, which is used for text-based media types.
 var identity = function(x) { return x; }
   , toString = function(x) { return x.toString(); }
 Content.registerProcessor(
   ["text/html","text/plain","text"],
   { parser: identity, stringify: toString });
 
-// Register the JSON processor, which is used for JSON-based media types.
+// RegisterTypes the JSON processor, which is used for JSON-based media types.
 Content.registerProcessor(
   ["application/json; charset=utf-8","application/json","json"],
   {
@@ -6751,7 +6751,7 @@ Content.registerProcessor(
       return JSON.stringify(data); }});
 
 var qs = require('querystring');
-// Register the post processor, which is used for JSON-based media types.
+// RegisterTypes the post processor, which is used for JSON-based media types.
 Content.registerProcessor(
   ["application/x-www-form-urlencoded"],
   { parser : qs.parse, stringify : qs.stringify });
@@ -8864,14 +8864,14 @@ Content.registerProcessor = function(types,processor) {
   }
 };
 
-// Register the identity processor, which is used for text-based media types.
+// RegisterTypes the identity processor, which is used for text-based media types.
 var identity = function(x) { return x; }
   , toString = function(x) { return x.toString(); }
 Content.registerProcessor(
   ["text/html","text/plain","text"],
   { parser: identity, stringify: toString });
 
-// Register the JSON processor, which is used for JSON-based media types.
+// RegisterTypes the JSON processor, which is used for JSON-based media types.
 Content.registerProcessor(
   ["application/json; charset=utf-8","application/json","json"],
   {

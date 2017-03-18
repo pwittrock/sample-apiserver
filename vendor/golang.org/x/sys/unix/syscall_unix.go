@@ -84,7 +84,7 @@ func (m *mmapper) Mmap(fd int, offset int64, length int, prot int, flags int) (d
 	// Use unsafe to turn sl into a []byte.
 	b := *(*[]byte)(unsafe.Pointer(&sl))
 
-	// Register mapping in m and return it.
+	// RegisterTypes mapping in m and return it.
 	p := &b[cap(b)-1]
 	m.Lock()
 	defer m.Unlock()

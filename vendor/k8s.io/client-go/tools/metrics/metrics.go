@@ -43,7 +43,7 @@ var (
 	RequestResult ResultMetric = noopResult{}
 )
 
-// Register registers metrics for the rest client to use. This can
+// RegisterTypes registers metrics for the rest client to use. This can
 // only be called once.
 func Register(lm LatencyMetric, rm ResultMetric) {
 	registerMetrics.Do(func() {

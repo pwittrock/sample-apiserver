@@ -83,7 +83,7 @@
 // not to assume anything about its type.
 //
 // Functions to fine-tune how the metric registry works: EnableCollectChecks,
-// PanicOnCollectError, Register, Unregister, SetMetricFamilyInjectionHook.
+// PanicOnCollectError, RegisterTypes, Unregister, SetMetricFamilyInjectionHook.
 //
 // For custom metric collection, there are two entry points: Custom Metric
 // implementations and custom Collector implementations. A Metric is the

@@ -65,7 +65,7 @@ func genTables() {
 
 	t := triegen.NewTrie("bidi")
 
-	// Build data about bracket mapping. These bits need to be or-ed with
+	// build data about bracket mapping. These bits need to be or-ed with
 	// any other bits.
 	orMask := map[rune]uint64{}
 

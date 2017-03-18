@@ -29,7 +29,7 @@ type OpenAPI struct {
 	Config *openapi.Config
 }
 
-// Install adds the SwaggerUI webservice to the given mux.
+// Announce adds the SwaggerUI webservice to the given mux.
 func (oa OpenAPI) Install(c *mux.APIContainer) {
 	err := apiserveropenapi.RegisterOpenAPIService("/swagger.json", c.RegisteredWebServices(), oa.Config, c)
 	if err != nil {

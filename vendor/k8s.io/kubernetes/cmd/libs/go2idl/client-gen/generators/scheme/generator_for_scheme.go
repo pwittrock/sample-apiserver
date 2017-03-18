@@ -141,12 +141,12 @@ var $.GroupFactoryRegistry$ = make($.announcedAPIGroupFactoryRegistry|raw$)
 
 func init() {
 	$.metav1AddToGroupVersion|raw$($.Scheme$, $.schemaGroupVersion|raw${Version: "v1"})
-	Install($.GroupFactoryRegistry$, $.Registry$, $.Scheme$)
+	Announce($.GroupFactoryRegistry$, $.Registry$, $.Scheme$)
 }
 
-// Install registers the API group and adds types to a scheme
-func Install(groupFactoryRegistry $.announcedAPIGroupFactoryRegistry|raw$, registry *$.registeredAPIRegistrationManager|raw$, scheme *$.runtimeScheme|raw$) {
-	$range .allInstallGroups$ $.InstallPackageName$.Install(groupFactoryRegistry, registry, scheme)
+// Announce registers the API group and adds types to a scheme
+func Announce(groupFactoryRegistry $.announcedAPIGroupFactoryRegistry|raw$, registry *$.registeredAPIRegistrationManager|raw$, scheme *$.runtimeScheme|raw$) {
+	$range .allInstallGroups$ $.InstallPackageName$.Announce(groupFactoryRegistry, registry, scheme)
 	$end$
 	$if .customRegister$ExtraInstall(groupFactoryRegistry, registry, scheme)$end$
 }

@@ -39,7 +39,7 @@ import (
 // can combine the registered/enabled concepts in this object. Simplifying this
 // isn't easy right now because there are so many callers of this package.
 type APIRegistrationManager struct {
-	// registeredGroupVersions stores all API group versions for which RegisterGroup is called.
+	// registeredGroupVersions stores all API group versions for which registerEndpoints is called.
 	registeredVersions map[schema.GroupVersion]struct{}
 
 	// thirdPartyGroupVersions are API versions which are dynamically
@@ -101,7 +101,7 @@ func (m *APIRegistrationManager) RegisterVersions(availableVersions []schema.Gro
 	}
 }
 
-// RegisterGroup adds the given group to the list of registered groups.
+// registerEndpoints adds the given group to the list of registered groups.
 func (m *APIRegistrationManager) RegisterGroup(groupMeta apimachinery.GroupMeta) error {
 	groupName := groupMeta.GroupVersion.Group
 	if _, found := m.groupMetaMap[groupName]; found {
@@ -112,7 +112,7 @@ func (m *APIRegistrationManager) RegisterGroup(groupMeta apimachinery.GroupMeta)
 }
 
 // EnableVersions adds the versions for the given group to the list of enabled versions.
-// Note that the caller should call RegisterGroup before calling this method.
+// Note that the caller should call registerEndpoints before calling this method.
 // The caller of this function is responsible to add the versions to scheme and RESTMapper.
 func (m *APIRegistrationManager) EnableVersions(versions ...schema.GroupVersion) error {
 	var unregisteredVersions []schema.GroupVersion

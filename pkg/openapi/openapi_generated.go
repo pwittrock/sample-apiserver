@@ -30,10 +30,9 @@ import (
 
 func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
 	return map[string]openapi.OpenAPIDefinition{
-		"github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastle": {
+		"github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastle": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
-					Description: "HyruleCastle does some cool stuff",
 					Properties: map[string]spec.Schema{
 						"kind": {
 							SchemaProps: spec.SchemaProps{
@@ -56,21 +55,21 @@ func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.Ope
 						},
 						"spec": {
 							SchemaProps: spec.SchemaProps{
-								Ref: ref("github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastleSpec"),
+								Ref: ref("github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastleSpec"),
 							},
 						},
 						"status": {
 							SchemaProps: spec.SchemaProps{
-								Ref: ref("github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastleStatus"),
+								Ref: ref("github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastleStatus"),
 							},
 						},
 					},
 				},
 			},
 			Dependencies: []string{
-				"github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastleSpec", "github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastleStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+				"github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastleSpec", "github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastleStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
 		},
-		"github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastleList": {
+		"github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastleList": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Properties: map[string]spec.Schema{
@@ -99,7 +98,7 @@ func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.Ope
 								Items: &spec.SchemaOrArray{
 									Schema: &spec.Schema{
 										SchemaProps: spec.SchemaProps{
-											Ref: ref("github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastle"),
+											Ref: ref("github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastle"),
 										},
 									},
 								},
@@ -110,13 +109,13 @@ func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.Ope
 				},
 			},
 			Dependencies: []string{
-				"github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastle", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+				"github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastle", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
 		},
-		"github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastleSpec": {
+		"github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastleSpec": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Properties: map[string]spec.Schema{
-						"swords": {
+						"mushrooms": {
 							SchemaProps: spec.SchemaProps{
 								Type:   []string{"integer"},
 								Format: "int32",
@@ -127,126 +126,42 @@ func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.Ope
 			},
 			Dependencies: []string{},
 		},
-		"github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1.HyruleCastleStatus": {
+		"github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastleStatus": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
 					Properties: map[string]spec.Schema{
-						"swordCount": {
-							SchemaProps: spec.SchemaProps{
-								Type:   []string{"integer"},
-								Format: "int32",
-							},
-						},
-					},
-				},
-			},
-			Dependencies: []string{},
-		},
-		"github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.Flunder": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Description: "Flunder does some cool stuff",
-					Properties: map[string]spec.Schema{
-						"kind": {
-							SchemaProps: spec.SchemaProps{
-								Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#types-kinds",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-						"apiVersion": {
-							SchemaProps: spec.SchemaProps{
-								Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#resources",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-						"metadata": {
-							SchemaProps: spec.SchemaProps{
-								Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
-							},
-						},
-						"spec": {
-							SchemaProps: spec.SchemaProps{
-								Ref: ref("github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.FlunderSpec"),
-							},
-						},
-						"status": {
-							SchemaProps: spec.SchemaProps{
-								Ref: ref("github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.FlunderStatus"),
-							},
-						},
-					},
-				},
-			},
-			Dependencies: []string{
-				"github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.FlunderSpec", "github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.FlunderStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
-		},
-		"github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.FlunderList": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Properties: map[string]spec.Schema{
-						"kind": {
-							SchemaProps: spec.SchemaProps{
-								Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#types-kinds",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-						"apiVersion": {
-							SchemaProps: spec.SchemaProps{
-								Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#resources",
-								Type:        []string{"string"},
-								Format:      "",
-							},
-						},
-						"metadata": {
-							SchemaProps: spec.SchemaProps{
-								Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
-							},
-						},
-						"items": {
-							SchemaProps: spec.SchemaProps{
-								Type: []string{"array"},
-								Items: &spec.SchemaOrArray{
-									Schema: &spec.Schema{
-										SchemaProps: spec.SchemaProps{
-											Ref: ref("github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.Flunder"),
-										},
-									},
-								},
-							},
-						},
-					},
-					Required: []string{"items"},
-				},
-			},
-			Dependencies: []string{
-				"github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.Flunder", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
-		},
-		"github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.FlunderSpec": {
-			Schema: spec.Schema{
-				SchemaProps: spec.SchemaProps{
-					Properties: map[string]spec.Schema{
-						"A": {
+						"message": {
 							SchemaProps: spec.SchemaProps{
 								Type:   []string{"string"},
 								Format: "",
 							},
 						},
 					},
-					Required: []string{"A"},
 				},
 			},
 			Dependencies: []string{},
 		},
-		"github.com/pwittrock/apiserver-helloworld/apis/wardle/v1alpha1.FlunderStatus": {
+		"github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.ScaleCastle": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
-					Properties: map[string]spec.Schema{},
+					Properties: map[string]spec.Schema{
+						"TypeMeta": {
+							SchemaProps: spec.SchemaProps{
+								Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta"),
+							},
+						},
+						"ObjectMeta": {
+							SchemaProps: spec.SchemaProps{
+								Description: "Standard object metadata; More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata.",
+								Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							},
+						},
+					},
+					Required: []string{"TypeMeta"},
 				},
 			},
-			Dependencies: []string{},
+			Dependencies: []string{
+				"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta"},
 		},
 		"k8s.io/apimachinery/pkg/api/resource.Quantity": resource.Quantity{}.OpenAPIDefinition(),
 		"k8s.io/apimachinery/pkg/api/resource.int64Amount": {
