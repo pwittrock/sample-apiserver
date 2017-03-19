@@ -36,6 +36,7 @@ var repoPackage string
 var copyFrom string
 var domain string
 var types []string
+var goPath string
 
 func main() {
 	if len(os.Getenv("GOMAXPROCS")) == 0 {
@@ -55,6 +56,7 @@ func main() {
 	addTypesCmd.Flags().StringVar(&domain, "domain", "k8s.io", "domain group lives in")
 
 	genCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
+	genCmd.Flags().StringVar(&goPath, "go-path", "/out", "gopath")
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -83,9 +85,10 @@ var genCmd = &cobra.Command{
 func RunGenCmd(cmd *cobra.Command, args []string) {
 	c := exec.Command("./run.sh")
 	c.Env = append(c.Env, fmt.Sprintf("REPO=%s", repoName))
+	c.Env = append(c.Env, fmt.Sprintf("GOPATH=%s", goPath))
 	out, err := c.CombinedOutput()
 	if err != nil {
-		panic(err)
+		panic(fmt.Errorf("Error generating files: %v %s", err, out))
 	}
 	fmt.Printf("%s", out)
 }
@@ -110,6 +113,8 @@ func RunInit(cmd *cobra.Command, args []string) {
 	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "docs")).CombinedOutput()
 	fmt.Printf("%s", out)
 	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "pkg/openapi")).CombinedOutput()
+	fmt.Printf("%s", out)
+	out, _ = exec.Command("cp", "-r", filepath.Join(copyFrom, "pkg/openapi/doc.go"), filepath.Join(repoPath, "pkg/openapi")).CombinedOutput()
 	fmt.Printf("%s", out)
 }
 
@@ -217,7 +222,7 @@ func RunAddTypes(cmd *cobra.Command, args []string) {
 			f.Close()
 
 			f, err = os.OpenFile(docgo, os.O_WRONLY, 0)
-			err = t.Execute(f, NewDocTemplateArguments{version, filepath.Join(repoPackage, "apis", group), group})
+			err = t.Execute(f, NewDocTemplateArguments{version, filepath.Join(repoName, "apis", group), group})
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -401,5 +406,23 @@ limitations under the License.
 // +domain={{.Domain}}
 
 package apis
+
+`
+
+var openApiDoc = `/*
+Copyright 2017 The Kubernetes Authors.
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Package openapi exists to hold generated openapi code
+package openapi
 
 `

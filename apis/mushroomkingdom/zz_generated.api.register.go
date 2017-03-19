@@ -47,13 +47,13 @@ const (
 // +genclient=true
 
 type PeachesCastle struct {
-	metav1.TypeMeta
-
 	metav1.ObjectMeta
 
 	Spec PeachesCastleSpec
 
 	Status PeachesCastleStatus
+
+	metav1.TypeMeta
 }
 
 type PeachesCastleList struct {

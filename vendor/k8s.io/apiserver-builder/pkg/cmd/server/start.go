@@ -29,10 +29,12 @@ import (
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 
 	"github.com/golang/glog"
-	generatedopenapi "github.com/pwittrock/apiserver-helloworld/pkg/openapi"
+	"k8s.io/apimachinery/pkg/openapi"
 )
 
 const defaultEtcdPathPrefix = "/registry/wardle.kubernetes.io"
+
+var GetOpenApiDefinition openapi.GetOpenAPIDefinitions
 
 type WardleServerOptions struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
@@ -141,7 +143,7 @@ func (o WardleServerOptions) RunWardleServer(stopCh <-chan struct{}) error {
 		return err
 	}
 
-	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(generatedopenapi.GetOpenAPIDefinitions, defaults.Scheme)
+	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(GetOpenApiDefinition, defaults.Scheme)
 	//config.GenericConfig.OpenAPIConfig.PostProcessSpec = postProcessOpenAPISpecForBackwardCompatibility
 	//config.GenericConfig.OpenAPIConfig.SecurityDefinitions = securityDefinitions
 	config.GenericConfig.OpenAPIConfig.Info.Title = "Wardle"

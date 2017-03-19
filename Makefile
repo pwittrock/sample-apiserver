@@ -29,3 +29,9 @@ docs: cleandocs
 
 run: build
 	./main -v 10 --authentication-kubeconfig ~/.kube/auth_config --authorization-kubeconfig ~/.kube/auth_config --client-ca-file /var/run/kubernetes/apiserver.crt  --requestheader-client-ca-file /var/run/kubernetes/apiserver.crt --requestheader-username-headers=X-Remote-User --requestheader-group-headers=X-Remote-Group --requestheader-extra-headers-prefix=X-Remote-Extra- --etcd-servers=http://localhost:2379 --secure-port=9443 --tls-ca-file  /var/run/kubernetes/apiserver.crt
+
+# docker run -i -t -v  /Users/pwittroc/test:/out --entrypoint bash pwittrock/kubec
+# docker run -i -t -v  /Users/pwittroc/test/src/:/out pwittrock/kubec
+# docker run -i -t -v  /Users/pwittroc/test/:/out pwittrock/kubec init --repo-name=github.com/pwittrock/test
+# docker run -i -t -v  /Users/pwittroc/test/:/out pwittrock/kubec add-types --repo-name=github.com/pwittrock/test --types wardle/v1alpha1/Flunder,hyrule/v1/HyruleCastle,mushroomkingdom/v2/PeachesCastle --repo-package github.com/pwittrock/apiserver-helloworld
+# docker run -i -t -v  /Users/pwittroc/test/:/out pwittrock/kubec generate --repo-name=github.com/pwittrock/test
