@@ -31,7 +31,10 @@ import (
 )
 
 var repoPath string
+var repoName string
 var repoPackage string
+var copyFrom string
+var domain string
 var types []string
 
 func main() {
@@ -39,11 +42,19 @@ func main() {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
 
-	cmd.AddCommand(initCmd, addTypesCmd)
-	initCmd.Flags().StringVar(&repoPath, "repo-path", "", "path to repo")
-	addTypesCmd.Flags().StringVar(&repoPath, "repo-path", "", "path to repo")
+	cmd.AddCommand(initCmd, addTypesCmd, genCmd)
+	initCmd.Flags().StringVar(&repoPath, "repo-path", "/out", "path to repo")
+	initCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
+	initCmd.Flags().StringVar(&copyFrom, "from-path", "/go/src/github.com/pwittrock/apiserver-helloworld/", "path to repo to copy from")
+	initCmd.Flags().StringVar(&domain, "domain", "k8s.io", "domain group lives in")
+
+	addTypesCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
+	addTypesCmd.Flags().StringVar(&repoPath, "repo-path", "/out", "path to repo")
 	addTypesCmd.Flags().StringSliceVar(&types, "types", []string{}, "list of group/version/kind")
 	addTypesCmd.Flags().StringVar(&repoPackage, "repo-package", "", "repo package")
+	addTypesCmd.Flags().StringVar(&domain, "domain", "k8s.io", "domain group lives in")
+
+	genCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -62,21 +73,43 @@ var cmd = &cobra.Command{
 	Run:   RunMain,
 }
 
+var genCmd = &cobra.Command{
+	Use:   "generate",
+	Short: "Create generated files",
+	Long:  `Create generated files`,
+	Run:   RunGenCmd,
+}
+
+func RunGenCmd(cmd *cobra.Command, args []string) {
+	c := exec.Command("./run.sh")
+	c.Env = append(c.Env, fmt.Sprintf("REPO=%s", repoName))
+	out, err := c.CombinedOutput()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("%s", out)
+}
+
 var initCmd = &cobra.Command{
-	Use:   "version",
-	Short: "Print the version number of Hugo",
-	Long:  `All software has versions. This is Hugo's`,
+	Use:   "init",
+	Short: "Initialize a directory",
+	Long:  `Initialize a directory`,
 	Run:   RunInit,
 }
 
 func RunInit(cmd *cobra.Command, args []string) {
-	out, _ := exec.Command("cp", "-r", "../../vendor", repoPath).CombinedOutput()
+	repoPath = filepath.Join(repoPath, "src", repoName)
+	out, _ := exec.Command("cp", "-r", filepath.Join(copyFrom, "vendor"), repoPath).CombinedOutput()
 	fmt.Printf("%s", out)
-	out, _ = exec.Command("cp", "-r", "../../Godeps", repoPath).CombinedOutput()
+	out, _ = exec.Command("cp", "-r", filepath.Join(copyFrom, "Godeps"), repoPath).CombinedOutput()
 	fmt.Printf("%s", out)
-	out, _ = exec.Command("mkdir", "apis").CombinedOutput()
-	out, _ = exec.Command("mkdir", "-p", "docs/").CombinedOutput()
-	out, _ = exec.Command("mkdir", "-p", "pkg/openapi").CombinedOutput()
+	out, _ = exec.Command("cp", "-r", filepath.Join(copyFrom, "main.go"), repoPath).CombinedOutput()
+	fmt.Printf("%s", out)
+	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "apis")).CombinedOutput()
+	fmt.Printf("%s", out)
+	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "docs")).CombinedOutput()
+	fmt.Printf("%s", out)
+	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "pkg/openapi")).CombinedOutput()
 	fmt.Printf("%s", out)
 }
 
@@ -88,6 +121,8 @@ var addTypesCmd = &cobra.Command{
 }
 
 func RunAddTypes(cmd *cobra.Command, args []string) {
+	repoPath = filepath.Join(repoPath, "src", repoName)
+
 	groups := sets.String{}
 	groupVersions := sets.String{}
 	kindsToGroupVersion := map[string]string{}
@@ -115,6 +150,31 @@ func RunAddTypes(cmd *cobra.Command, args []string) {
 			if err != nil {
 				fmt.Printf("Failed to create directory %s %v %s", path, err, out)
 			}
+		}
+
+		apisDocPath := filepath.Join(repoPath, "apis/doc.go")
+		_, err = os.Stat(apisDocPath)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				panic(fmt.Sprintf("Could not stat file %s %v", apisDocPath, err))
+			}
+			fmt.Printf("Creating file %s\n", apisDocPath)
+			t := template.Must(template.New("apis-doc-template").Parse(apisDocTemplate))
+			f, err := os.Create(apisDocPath)
+			if err != nil {
+				fmt.Println(err)
+				return
+			}
+			f.Close()
+
+			f, err = os.OpenFile(apisDocPath, os.O_WRONLY, 0)
+			err = t.Execute(f, ApisDocTemplateArguments{
+				Domain: domain,
+			})
+			if err != nil {
+				fmt.Println(err)
+			}
+			f.Close()
 		}
 
 		typesgo := filepath.Join(path, "types.go")
@@ -313,5 +373,33 @@ limitations under the License.
 
 // Package api is the internal version of the API.
 package {{.Group}}
+
+`
+
+type ApisDocTemplateArguments struct {
+	Domain string
+}
+
+var apisDocTemplate = `
+/*
+Copyright 2017 The Kubernetes Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+//
+// +domain={{.Domain}}
+
+package apis
 
 `

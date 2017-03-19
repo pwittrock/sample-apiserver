@@ -42,6 +42,7 @@ type ResourceDefinition struct {
 	CreateStrategy       rest.RESTCreateStrategy
 	DeleteStrategy       rest.RESTDeleteStrategy
 	UpdateStrategy       rest.RESTUpdateStrategy
+	SubResources         map[string]rest.Storage
 	PredicateFunc        func(label labels.Selector, field fields.Selector) storage.SelectionPredicate
 }
 

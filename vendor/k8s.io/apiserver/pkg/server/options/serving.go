@@ -145,6 +145,7 @@ func (s *SecureServingOptions) ApplyTo(c *server.Config) error {
 	}
 
 	loopbackClientConfig, err := c.SecureServingInfo.NewSelfClientConfig(uuid.NewRandom().String())
+	fmt.Printf("pwittroc - self client config %v\n", err)
 	switch {
 	// if we failed and there's no fallback loopback client config, we need to fail
 	case err != nil && c.LoopbackClientConfig == nil:

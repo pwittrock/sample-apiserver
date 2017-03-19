@@ -16,22 +16,40 @@ limitations under the License.
 
 package apis
 
-// Uncomment this to make Flunder a global (unnamedspaced) resource (e.g. like Node)
-//func (s *DefaultFlunderStrategy) NamespaceScoped() bool {
-//	return false
-//}
+//import (
+//	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+//	"k8s.io/apimachinery/pkg/runtime"
+//	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
+//	"k8s.io/apiserver/pkg/registry/rest"
+//)
 
-// Uncomment this to add validation logic on create
-//func (s *DefaultFlunderStrategy) Validate(ctx genericapirequest.Context, obj runtime.Object) field.ErrorList {
-//	return nil
-//}
-
-// Uncomment this to add validation logic on update
-//func (s *DefaultFlunderStrategy) ValidateUpdate(ctx genericapirequest.Context, obj, old runtime.Object) field.ErrorList {
+////+sub-resource=hyrulecastles/print
+//type PrintHyruleCastleImpl struct {
 //
 //}
-
-// Uncomment this to add defaulting or other mutation logic before the Flunder object is persisted
-//func (s *DefaultFlunderStrategy) Canonicalize(obj runtime.Object) {
 //
+//type PrintHyruleCastle struct {
+//	metav1.TypeMeta
+//	// +optional
+//	metav1.ObjectMeta
+//
+//	kind string
+//}
+//
+//func (r *PrintHyruleCastleImpl) New() runtime.Object {
+//	return &PrintHyruleCastle{}
+//}
+//
+//// Get finds a resource in the storage by name and returns it.
+//// Although it can return an arbitrary error value, IsNotFound(err) is true for the
+//// returned error value err when the specified resource is not found.
+//func (r *PrintHyruleCastleImpl) Get(ctx genericapirequest.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+//	return nil, nil
+//}
+//
+//// Update finds a resource in the storage and updates it. Some implementations
+//// may allow updates creates the object - they should set the created boolean
+//// to true.
+//func (r *PrintHyruleCastleImpl) Update(ctx genericapirequest.Context, name string, objInfo rest.UpdatedObjectInfo) (runtime.Object, bool, error) {
+//	return nil, true, nil
 //}

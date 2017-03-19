@@ -28,6 +28,7 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 
+	"github.com/golang/glog"
 	generatedopenapi "github.com/pwittrock/apiserver-helloworld/pkg/openapi"
 )
 
@@ -59,6 +60,8 @@ func NewWardleServerOptions(out, errOut io.Writer, providers []defaults.Resource
 	return o
 }
 
+var printBearerToken = false
+
 // NewCommandStartMaster provides a CLI handler for 'start master' command
 func NewCommandStartWardleServer(out, errOut io.Writer, providers []defaults.ResourceDefinitionProvider, stopCh <-chan struct{}) *cobra.Command {
 	o := NewWardleServerOptions(out, errOut, providers)
@@ -81,6 +84,8 @@ func NewCommandStartWardleServer(out, errOut io.Writer, providers []defaults.Res
 	}
 
 	flags := cmd.Flags()
+	flags.BoolVar(&printBearerToken, "print-bearer-token", false,
+		"If true, print a curl command with the bearer token to test the server")
 	o.RecommendedOptions.AddFlags(flags)
 
 	return cmd
@@ -111,6 +116,25 @@ func (o WardleServerOptions) Config() (*apiserver.Config, error) {
 	return config, nil
 }
 
+func (o WardleServerOptions) SetAuthOptions() error {
+	return nil
+	//config, err := o.Config()
+	//if err != nil {
+	//	return err
+	//}
+	//
+	//config.GenericConfig.LoopbackClientConfig =
+	//authorizationConfig := s.Authorization.ToAuthorizationConfig(sharedInformers)
+	//
+	//apiAuthenticator, securityDefinitions, err := authenticatorConfig.New()
+	//if err != nil {
+	//	return nil, nil, fmt.Errorf("invalid authentication config: %v", err)
+	//}
+	//
+	//apiAuthorizer, err := authorizationConfig.New()
+	//config.GenericConfig.Authenticator
+}
+
 func (o WardleServerOptions) RunWardleServer(stopCh <-chan struct{}) error {
 	config, err := o.Config()
 	if err != nil {
@@ -121,6 +145,14 @@ func (o WardleServerOptions) RunWardleServer(stopCh <-chan struct{}) error {
 	//config.GenericConfig.OpenAPIConfig.PostProcessSpec = postProcessOpenAPISpecForBackwardCompatibility
 	//config.GenericConfig.OpenAPIConfig.SecurityDefinitions = securityDefinitions
 	config.GenericConfig.OpenAPIConfig.Info.Title = "Wardle"
+
+	if printBearerToken {
+		glog.Infof("Serving on loopback...")
+		glog.Infof("\n\n********************************\nTo test the server run:\n"+
+			"curl -k -H \"Authorization: Bearer %s\" %s\n********************************\n\n",
+			config.GenericConfig.LoopbackClientConfig.BearerToken,
+			config.GenericConfig.LoopbackClientConfig.Host)
+	}
 
 	for _, provider := range o.APIProviders {
 		config.AddApi(provider)
