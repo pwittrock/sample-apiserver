@@ -21,13 +21,19 @@ import (
 	"os"
 	"runtime"
 
+	"bufio"
+	"bytes"
+	"github.com/golang/glog"
 	"github.com/spf13/cobra"
+	"io"
 	"io/ioutil"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"text/template"
+	"time"
 )
 
 var repoPath string
@@ -37,13 +43,14 @@ var copyFrom string
 var domain string
 var types []string
 var goPath string
+var skipOpenApi bool
 
 func main() {
 	if len(os.Getenv("GOMAXPROCS")) == 0 {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
 
-	cmd.AddCommand(initCmd, addTypesCmd, genCmd)
+	cmd.AddCommand(initCmd, addTypesCmd, genCmd, genDocs)
 	initCmd.Flags().StringVar(&repoPath, "repo-path", "/out", "path to repo")
 	initCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 	initCmd.Flags().StringVar(&copyFrom, "from-path", "/go/src/github.com/pwittrock/apiserver-helloworld/", "path to repo to copy from")
@@ -57,6 +64,11 @@ func main() {
 
 	genCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 	genCmd.Flags().StringVar(&goPath, "go-path", "/out", "gopath")
+
+	genDocs.Flags().StringVar(&copyFrom, "from-path", "/go/src/github.com/pwittrock/apiserver-helloworld/", "path to repo to copy from")
+	genDocs.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
+	genDocs.Flags().StringVar(&goPath, "go-path", "/out", "gopath")
+	genDocs.Flags().BoolVar(&skipOpenApi, "skip-openapi", false, "If true, don't generate swagger.json")
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
@@ -73,6 +85,204 @@ var cmd = &cobra.Command{
 	Short: "kubec builds Kubernetes extensions",
 	Long:  `kubec is a set of commands for building Kubernetes extensions`,
 	Run:   RunMain,
+}
+
+var genDocs = &cobra.Command{
+	Use:   "generate-docs",
+	Short: "Create generated docs files",
+	Long:  `Create generated docs files`,
+	Run:   RunGenDocsCmd,
+}
+
+var bearerToken = regexp.MustCompile(`Local Authorization Token: (.+)$`)
+
+func RunGenDocsCmd(cmd *cobra.Command, args []string) {
+	dir := filepath.Join(goPath, "src", repoName)
+
+	if !skipOpenApi {
+		config := fmt.Sprintf("%s/cmd/kubec/empty_config", copyFrom)
+		cert := "/var/run/kubernetes/apiserver.crt"
+		c := exec.Command("go", "run", filepath.Join("./main.go"),
+			"--authentication-kubeconfig", config,
+			"--authorization-kubeconfig", config,
+			"--client-ca-file", cert,
+			"--requestheader-client-ca-file", cert,
+			"--requestheader-username-headers", "X-Remote-User",
+			"--requestheader-group-headers", "X-Remote-Group",
+			"--requestheader-extra-headers-prefix", "X-Remote-Extra-",
+			"--etcd-servers", "http://localhost:2379",
+			"--secure-port", "9443",
+			"--tls-ca-file", cert,
+			"--print-bearer-token")
+		c.Env = append(c.Env, fmt.Sprintf("REPO=%s", repoName))
+		c.Env = append(c.Env, fmt.Sprintf("GOPATH=%s", goPath))
+		c.Dir = dir
+
+		token := make(chan string)
+		go func() {
+			// Obtain a pipe to receive the stdout of the command
+			out, err := c.StdoutPipe()
+			if err != nil {
+				panic(err)
+			}
+			c.Stderr = c.Stdout
+			r := bufio.NewReader(out)
+
+			// Start the child process
+			err = c.Start()
+			if err != nil {
+				panic(err)
+			}
+
+			t := ""
+			for {
+				line, _, err := r.ReadLine()
+				if err == io.EOF && len(line) == 0 {
+					break
+				}
+
+				fmt.Printf("%s\n", line)
+				if bearerToken.Match(line) {
+					t = bearerToken.FindStringSubmatch(string(line))[1]
+				}
+				// Wait to send the message until the server is running
+				if strings.Contains(string(line), "Serving securely on 0.0.0.0:9443") {
+					token <- t
+				}
+
+				if err == io.EOF {
+					err := fmt.Errorf("Last line not terminated: %q", line)
+					panic(err)
+				}
+				if err != nil {
+					panic(err)
+				}
+			}
+		}()
+
+		var stdOut bytes.Buffer
+		var stdErr bytes.Buffer
+
+		fmt.Printf("Waiting for server to start...\n")
+		select {
+		case <-time.After(5 * time.Minute):
+			if err := c.Process.Kill(); err != nil {
+				glog.Fatal("failed to kill: ", err)
+			}
+			glog.Infof("process killed as timeout reached")
+		case bearer := <-token:
+			time.Sleep(1 * time.Second)
+			a := []string{"-k",
+				"-H", fmt.Sprintf("Authorization: Bearer %s", bearer),
+				"https://localhost:9443/swagger.json",
+			}
+			c2 := exec.Command("curl", a...)
+			c2.Stdout = &stdOut
+			c2.Stderr = &stdErr
+
+			fmt.Printf("Using curl to retrieve swagger: curl %v\n", a)
+			err := c2.Run()
+			if err != nil {
+				panic(fmt.Errorf("Failed to get swagger spec %v: %s %s", err, stdErr.Bytes(), stdOut.Bytes()))
+			}
+			c.Process.Kill()
+		}
+
+		openapiFile := filepath.Join(dir, "docs", "openapi-spec", "swagger.json")
+		_, err := os.Stat(openapiFile)
+		if err != nil {
+			if !os.IsNotExist(err) {
+				panic(fmt.Sprintf("Could not stat file %s %v", openapiFile, err))
+			}
+			fmt.Printf("Creating %s file\n", openapiFile)
+			f, err := os.Create(openapiFile)
+			if err != nil {
+				panic(err)
+			}
+			f.Close()
+		}
+
+		// Write the swagger file
+		fmt.Printf("Writing %s file\n", openapiFile)
+		err = ioutil.WriteFile(openapiFile, stdOut.Bytes(), 0644)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	configDir := filepath.Join(dir, "docs")
+
+	// Remove the old includes directory
+	rmFiles := exec.Command("rm", "-rf", filepath.Join(configDir, "includes"))
+	out, err := rmFiles.CombinedOutput()
+	if err != nil {
+		panic(fmt.Errorf("Failed to remove includes %s %v", out, err))
+
+	}
+	fmt.Print(string(out))
+
+	templateDir := filepath.Join(copyFrom, "vendor", "github.com", "kubernetes-incubator", "reference-docs", "gen_open_api")
+	refDocsCmd := filepath.Join(copyFrom, "vendor", "github.com", "kubernetes-incubator", "reference-docs", "main.go")
+	a := []string{"run", refDocsCmd,
+		"--doc-type", "open-api",
+		"--allow-errors",
+		"--gen-open-api-dir", templateDir,
+		"--config-dir", configDir,
+	}
+	runGo := exec.Command("go", a...)
+	out, err = runGo.CombinedOutput()
+	if err != nil {
+		panic(fmt.Errorf("Failed to run go %v %s %v", a, out, err))
+
+	}
+	fmt.Print(string(out))
+
+	broDocs := "/go/src/github.com/Birdrock/brodocs"
+
+	// Execute in a shell to interpret *
+	cleanDocs := exec.Command("bash", "-c", fmt.Sprintf("rm -rf %s/documents/*", broDocs))
+	cleanDocs.Dir = broDocs
+	out, err = cleanDocs.CombinedOutput()
+	if err != nil {
+		panic(fmt.Errorf("%s %v", out, err))
+	}
+
+	// Execute in a shell to interpret *
+	copyIncludes := exec.Command("bash", "-c", fmt.Sprintf("cp -r %s/includes/* %s/documents/", configDir, broDocs))
+	copyIncludes.Dir = broDocs
+	out, err = copyIncludes.CombinedOutput()
+	if err != nil {
+		panic(fmt.Errorf("%s %v", out, err))
+	}
+
+	copyManifest := exec.Command("bash", "-c", fmt.Sprintf("cp -r %s/manifest.json %s", configDir, broDocs))
+	copyManifest.Dir = broDocs
+	out, err = copyManifest.CombinedOutput()
+	if err != nil {
+		panic(fmt.Errorf("%s %v", out, err))
+	}
+
+	runBrodocs := exec.Command("node", "brodoc.js")
+	runBrodocs.Dir = broDocs
+	out, err = runBrodocs.CombinedOutput()
+	if err != nil {
+		panic(fmt.Errorf("%s %v", out, err))
+	}
+
+	docsBuildDir := filepath.Join(configDir, "build")
+	out, _ = exec.Command("mkdir", "-p", docsBuildDir).CombinedOutput()
+
+	copyOutput := exec.Command("bash", "-c", fmt.Sprintf("cp -r %s/* %s/", broDocs, docsBuildDir))
+	copyOutput.Dir = broDocs
+	out, err = copyOutput.CombinedOutput()
+	if err != nil {
+		panic(fmt.Errorf("%s %v", out, err))
+	}
+
+	//go run main.go --doc-type open-api --config-dir ~/sample-apiserver/src/k8s.io/sample-apiserver/docs/gen_open_api/ --allow-errors
+
+	// Write the file
+	// docker run -t -i -v $(pwd)/docs/includes:/source -v $(pwd)/docs/build:/build -v $(pwd)/docs:/manifest pwittrock/brodocs
 }
 
 var genCmd = &cobra.Command{
@@ -110,7 +320,7 @@ func RunInit(cmd *cobra.Command, args []string) {
 	fmt.Printf("%s", out)
 	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "apis")).CombinedOutput()
 	fmt.Printf("%s", out)
-	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "docs")).CombinedOutput()
+	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "docs", "openapi-spec")).CombinedOutput()
 	fmt.Printf("%s", out)
 	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "pkg/openapi")).CombinedOutput()
 	fmt.Printf("%s", out)

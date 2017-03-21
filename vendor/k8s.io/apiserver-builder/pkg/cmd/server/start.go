@@ -154,6 +154,7 @@ func (o WardleServerOptions) RunWardleServer(stopCh <-chan struct{}) error {
 			"curl -k -H \"Authorization: Bearer %s\" %s\n********************************\n\n",
 			config.GenericConfig.LoopbackClientConfig.BearerToken,
 			config.GenericConfig.LoopbackClientConfig.Host)
+		glog.Infof("Local Authorization Token: %s", config.GenericConfig.LoopbackClientConfig.BearerToken)
 	}
 
 	for _, provider := range o.APIProviders {

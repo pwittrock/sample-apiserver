@@ -15,7 +15,6 @@ cleanapi:
 	rm -rf $(shell pwd)/gen_open_api/build
 	rm -rf $(shell pwd)/gen_open_api/includes
 	rm -rf $(shell pwd)/gen_open_api/manifest.json
-	rm -rf $(shell pwd)/gen_open_api/includes/_generated_*
 
 brodocs:
 	docker build . -t pwittrock/brodocs

@@ -261,6 +261,7 @@ var {{.Name}}ApiDefinition = &defaults.ResourceDefinition{
 	singleton{{.Kind}}Strategy,
 	singleton{{.Kind}}Strategy,
 	singleton{{.Kind}}Strategy.BasicMatch,
+	map[string]rest.Storage{},
 }
 `
 
