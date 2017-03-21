@@ -97,6 +97,7 @@ func Convert_mushroomkingdom_PeachesCastleList_To_v2_PeachesCastleList(in *mushr
 }
 
 func autoConvert_v2_PeachesCastleSpec_To_mushroomkingdom_PeachesCastleSpec(in *PeachesCastleSpec, out *mushroomkingdom.PeachesCastleSpec, s conversion.Scope) error {
+	out.Mushrooms = in.Mushrooms
 	return nil
 }
 
@@ -105,6 +106,7 @@ func Convert_v2_PeachesCastleSpec_To_mushroomkingdom_PeachesCastleSpec(in *Peach
 }
 
 func autoConvert_mushroomkingdom_PeachesCastleSpec_To_v2_PeachesCastleSpec(in *mushroomkingdom.PeachesCastleSpec, out *PeachesCastleSpec, s conversion.Scope) error {
+	out.Mushrooms = in.Mushrooms
 	return nil
 }
 

@@ -25,32 +25,32 @@ import (
 	"k8s.io/apimachinery/pkg/version"
 	genericapiserver "k8s.io/apiserver/pkg/server"
 
-	"k8s.io/apiserver-builder/pkg/defaults"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"github.com/golang/glog"
+	"k8s.io/apimachinery/pkg/util/sets"
+	"k8s.io/apiserver-builder/pkg/defaults"
+	"k8s.io/client-go/pkg/api"
 )
-
 
 type Installer struct {
 	GroupFactoryRegistry announced.APIGroupFactoryRegistry
-	Registry *registered.APIRegistrationManager
-	Scheme *runtime.Scheme
+	Registry             *registered.APIRegistrationManager
+	Scheme               *runtime.Scheme
 }
 
 func (c *Config) Init() *Config {
 
-	i := Installer{defaults.GroupFactoryRegistry, defaults.Registry, defaults.Scheme}
+	i := Installer{defaults.GroupFactoryRegistry, defaults.Registry, api.Scheme}
 	for _, provider := range defaults.APIProviders {
 		i.Install(provider)
 	}
 
 	// we need to add the options to empty v1
 	// TODO fix the server code to avoid this
-	metav1.AddToGroupVersion(defaults.Scheme, schema.GroupVersion{Version: "v1"})
+	metav1.AddToGroupVersion(api.Scheme, schema.GroupVersion{Version: "v1"})
 
 	// TODO: keep the generic ResourceDefinition server from wanting this
 	unversioned := schema.GroupVersion{Group: "", Version: "v1"}
-	defaults.Scheme.AddUnversionedTypes(unversioned,
+	api.Scheme.AddUnversionedTypes(unversioned,
 		&metav1.Status{},
 		&metav1.APIVersions{},
 		&metav1.APIGroupList{},
@@ -108,11 +108,11 @@ func (c completedConfig) New() (*WardleServer, error) {
 	}
 
 	apiGroupFactory := &defaults.APIGroupFactory{
-		defaults.StorageFactory{defaults.Scheme, c.GenericConfig.RESTOptionsGetter},
+		defaults.StorageFactory{api.Scheme, c.GenericConfig.RESTOptionsGetter},
 		defaults.GroupFactoryRegistry,
 		defaults.Registry,
-		defaults.Scheme,
-		defaults.Codecs,
+		api.Scheme,
+		api.Codecs,
 	}
 
 	glog.Infof("Provider count %v", len(defaults.APIProviders))

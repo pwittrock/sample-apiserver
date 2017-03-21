@@ -55,11 +55,18 @@ func CreateApisGenerator(context *generator.Context, pkg *types.Package, group, 
 
 	typesByVersionKind, typesByKindVersion, unversionedApiTypes := GetIndexedTypes(context, group)
 	imports := sets.NewString(
+		"reflect",
+		"fmt",
+		"k8s.io/client-go/pkg/api",
+		"k8s.io/apiserver/pkg/registry/rest",
 		"k8s.io/apimachinery/pkg/apimachinery/announced",
 		"k8s.io/apimachinery/pkg/runtime",
 		"k8s.io/apimachinery/pkg/runtime/schema",
-		"k8s.io/apiserver/pkg/storage/names",
 		"k8s.io/apiserver-builder/pkg/defaults",
+		"genericapirequest \"k8s.io/apiserver/pkg/endpoints/request\"",
+		"genericregistry \"k8s.io/apiserver/pkg/registry/generic/registry\"",
+		"metainternalversion \"k8s.io/apimachinery/pkg/apis/meta/internalversion\"",
+		"metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"",
 	)
 
 	groupTemplate, err := template.New(groupTemplateName).Parse(groupTemplateString)
@@ -110,7 +117,7 @@ func (d *apisGenerator) Finalize(context *generator.Context, w io.Writer) error 
 		defaultStrategy := d.UseDefaultStrategy(k)
 
 		// For each kind, write the kind scoped template
-		if err := d.kindTemplate.Execute(w, KindTemplateArgs{d.group, k, defaultStrategy}); err != nil {
+		if err := d.kindTemplate.Execute(w, KindTemplateArgs{d.group, k, strings.ToLower(k), defaultStrategy}); err != nil {
 			panic(errors.Errorf("Failed to execute template %v", err))
 		}
 
@@ -215,21 +222,20 @@ func (d *apisGenerator) GetListOfKinds() []string {
 }
 
 // GetVersionKindTemplateArgs returns arguments to pass into the VersionKind template
-func (d *apisGenerator) GetVersionKindTemplateArgs(context *generator.Context, v string, k string) (VersionKindTemplateArgs, string, bool) {
+func (d *apisGenerator) GetVersionKindTemplateArgs(context *generator.Context, v, k string) (VersionKindTemplateArgs, string, bool) {
 	t, f := d.typesByKindVersion[k][v]
 	if !f {
 		panic(errors.Errorf("Could not find type for %s %s", v, k))
 	}
 
-	// Add the imports
-	etcdPrefix := filepath.Dir(t.Name.Package)
-	d.imports.Insert(etcdPrefix)
-	d.imports.Insert(t.Name.Package)
-
 	// Don't write VersionKind info for unversioned objects
 	if IsUnversioned(t, d.group) {
 		return VersionKindTemplateArgs{}, "", false
 	}
+
+	etcdPrefix := filepath.Dir(t.Name.Package)
+	d.imports.Insert(etcdPrefix)
+	d.imports.Insert(t.Name.Package)
 
 	// Parse the resource name from the comment lines
 	comments := Comments(t.CommentLines)
@@ -239,16 +245,17 @@ func (d *apisGenerator) GetVersionKindTemplateArgs(context *generator.Context, v
 	}
 
 	return VersionKindTemplateArgs{
-		v, d.group, k, fmt.Sprintf("%s%s", v, k), resource,
+		v, d.group, k, strings.ToLower(k), fmt.Sprintf("%s%s", v, k), resource,
 	}, etcdPrefix, true
 }
 
 type VersionKindTemplateArgs struct {
-	Version  string
-	Group    string
-	Kind     string
-	Name     string
-	Resource string
+	Version   string
+	Group     string
+	Kind      string
+	LowerKind string
+	Name      string
+	Resource  string
 }
 
 const versionKindTemplateName = "VersionKindTemplate"
@@ -260,28 +267,80 @@ var {{.Name}}ApiDefinition = &defaults.ResourceDefinition{
 	singleton{{.Kind}}Strategy,
 	singleton{{.Kind}}Strategy,
 	singleton{{.Kind}}Strategy,
+	map[string]*defaults.ResourceDefinition{
+		"{{.Resource}}/status": {{.Name}}StatusApiDefinition,
+	},
 	singleton{{.Kind}}Strategy.BasicMatch,
-	map[string]rest.Storage{},
+	func(store *genericregistry.Store) rest.Storage { return &{{.Kind}}Store{store} },
 }
+
+var {{.Name}}StatusApiDefinition = &defaults.ResourceDefinition{
+	{{.Version}}.SchemeGroupVersion.WithResource("{{.Resource}}"),
+	singleton{{.Kind}}StatusStrategy,
+	singleton{{.Kind}}StatusStrategy,
+	singleton{{.Kind}}StatusStrategy,
+	singleton{{.Kind}}StatusStrategy,
+	map[string]*defaults.ResourceDefinition{},
+	singleton{{.Kind}}StatusStrategy.BasicMatch,
+	func(store *genericregistry.Store) rest.Storage { return &{{.Kind}}StatusStore{store} },
+}
+
 `
 
 type KindTemplateArgs struct {
 	Group      string
 	Kind       string
+	LowerKind  string
 	UseDefault bool
 }
 
 const kindTemplateName = "KindTemplate"
 const kindTemplateString = `
-{{if .UseDefault}}
-// Use the default strategy.  To override - in another file - define the struct {{.Kind}}Strategy and regenerate code
-var singleton{{.Kind}}Strategy = &Default{{.Kind}}Strategy{
-	defaults.BasicCreateDeleteUpdateStrategy{defaults.Scheme, names.SimpleNameGenerator},
-}{{else}}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// {{.Kind}} End user functions //
+///////////////////////////////////////////////////////////////////////////////
+
+// Add functions to this type in order to override the default behaviors
+type {{.Kind}}Strategy struct {
+	Default{{.Kind}}Strategy
+}
+
+// Add functions to this type in order to override the default behaviors
+type {{.Kind}}Store struct {
+	*genericregistry.Store
+}
+
+// Add functions to this type in order to override the default behaviors
+type {{.Kind}}StatusStore struct {
+	*genericregistry.Store
+}
+
+// Registry is an interface for things that know how to store {{.Kind}}.
+type {{.Kind}}Registry interface {
+	List{{.Kind}}s(ctx genericapirequest.Context, options *metainternalversion.ListOptions) (*{{.Group}}.{{.Kind}}List, error)
+	Get{{.Kind}}(ctx genericapirequest.Context, id string, options *metav1.GetOptions) (*{{.Group}}.{{.Kind}}, error)
+	Create{{.Kind}}(ctx genericapirequest.Context, id *{{.Group}}.{{.Kind}}) (*{{.Group}}.{{.Kind}}, error)
+	Update{{.Kind}}(ctx genericapirequest.Context, id *{{.Group}}.{{.Kind}}) (*{{.Group}}.{{.Kind}}, error)
+	Delete{{.Kind}}(ctx genericapirequest.Context, id string) error
+}
+
+// NewRegistry returns a new Registry interface for the given Storage. Any mismatched types will panic.
+func New{{.Kind}}Registry(s rest.StandardStorage) {{.Kind}}Registry {
+	return &storage{{.Kind}}{s}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+// {{.Kind}} System functions //
+///////////////////////////////////////////////////////////////////////////////
+
 // Use the override strategy and embedd the defaults for anything not override.
-var singleton{{.Kind}}Strategy = &{{.Kind}}Strategy{Default{{.Kind}}Strategy{
-	defaults.BasicCreateDeleteUpdateStrategy{defaults.Scheme, names.SimpleNameGenerator},
-}}{{end}}
+var singleton{{.Kind}}Strategy = &{{.Kind}}Strategy{
+	Default{{.Kind}}Strategy{ // Overide some methods
+		defaults.NewBasicStrategy(), // Use defaults
+	},
+}
 
 // Default Strategy for {{.Kind}}
 type Default{{.Kind}}Strategy struct {
@@ -290,19 +349,121 @@ type Default{{.Kind}}Strategy struct {
 }
 
 // NewFunc returns a new empty {{.Kind}}
-func (r *Default{{.Kind}}Strategy) NewFunc() runtime.Object {
+func (r Default{{.Kind}}Strategy) NewFunc() runtime.Object {
 	return &{{.Group}}.{{.Kind}}{}
 }
 
 // NewListFunc returns a new empty List of {{.Kind}}
-func (r *Default{{.Kind}}Strategy) NewListFunc() runtime.Object {
+func (r Default{{.Kind}}Strategy) NewListFunc() runtime.Object {
 	return &{{.Group}}.{{.Kind}}List{}
 }
 
 // ObjectNameFunc returns the name for a {{.Kind}}
-func (r *Default{{.Kind}}Strategy) ObjectNameFunc(obj runtime.Object) (string, error) {
+func (r Default{{.Kind}}Strategy) ObjectNameFunc(obj runtime.Object) (string, error) {
 	return obj.(*{{.Group}}.{{.Kind}}).Name, nil
 }
+
+func ({{.Kind}}Strategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
+	o := obj.(*{{.Group}}.{{.Kind}})
+	o.Status = {{.Group}}.{{.Kind}}Status{}
+	o.Generation = 1
+}
+
+func ({{.Kind}}Strategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+	new{{.Kind}} := obj.(*{{.Group}}.{{.Kind}})
+	old{{.Kind}} := old.(*{{.Group}}.{{.Kind}})
+	new{{.Kind}}.Status = old{{.Kind}}.Status
+
+	// Spec and annotation updates bump the generation.
+	if !reflect.DeepEqual(new{{.Kind}}.Spec, old{{.Kind}}.Spec) ||
+		!reflect.DeepEqual(new{{.Kind}}.Annotations, old{{.Kind}}.Annotations) {
+		new{{.Kind}}.Generation = old{{.Kind}}.Generation + 1
+	}
+}
+
+// Implement Status endpoint
+// StatusREST implements the REST endpoint for changing the status of a deployment
+type {{.Kind}}StatusStrategy struct {
+	{{.Kind}}Strategy
+}
+
+// singleton{{.Kind}}StatusStrategy contains the cross-cutting storage
+var singleton{{.Kind}}StatusStrategy = {{.Kind}}StatusStrategy{*singleton{{.Kind}}Strategy}
+
+//// {{.Kind}}StatusREST contains the REST method implementations
+//type {{.Kind}}StatusREST struct {
+//	store *genericregistry.Store
+//}
+//
+//func (r {{.Kind}}StatusREST) New() runtime.Object {
+//	return &{{.Group}}.{{.Kind}}{}
+//}
+//
+//// Get retrieves the object from the storage. It is required to support Patch.
+//func (r {{.Kind}}StatusREST) Get(ctx genericapirequest.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
+//	return r.store.Get(ctx, name, options)
+//}
+//
+//// Update alters the status subset of an object.
+//func (r {{.Kind}}StatusREST) Update(ctx genericapirequest.Context, name string, objInfo rest.UpdatedObjectInfo) (runtime.Object, bool, error) {
+//	return r.store.Update(ctx, name, objInfo)
+//}
+
+// PrepareForUpdate clears fields that are not allowed to be set by end users on update of status
+func ({{.Kind}}StatusStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+	new{{.Kind}} := obj.(*{{.Group}}.{{.Kind}})
+	old{{.Kind}} := old.(*{{.Group}}.{{.Kind}})
+	new{{.Kind}}.Spec = old{{.Kind}}.Spec
+	new{{.Kind}}.Labels = old{{.Kind}}.Labels
+}
+
+// Implement Registry
+// storage puts strong typing around storage calls
+type storage{{.Kind}} struct {
+	rest.StandardStorage
+}
+
+func (s *storage{{.Kind}}) List{{.Kind}}s(ctx genericapirequest.Context, options *metainternalversion.ListOptions) (*{{.Group}}.{{.Kind}}List, error) {
+	if options != nil && options.FieldSelector != nil && !options.FieldSelector.Empty() {
+		return nil, fmt.Errorf("field selector not supported yet")
+	}
+	obj, err := s.List(ctx, options)
+	if err != nil {
+		return nil, err
+	}
+	return obj.(*{{.Group}}.{{.Kind}}List), err
+}
+
+func (s *storage{{.Kind}}) Get{{.Kind}}(ctx genericapirequest.Context, id string, options *metav1.GetOptions) (*{{.Group}}.{{.Kind}}, error) {
+	obj, err := s.Get(ctx, id, options)
+	if err != nil {
+		return nil, err
+	}
+	return obj.(*{{.Group}}.{{.Kind}}), nil
+}
+
+func (s *storage{{.Kind}}) Create{{.Kind}}(ctx genericapirequest.Context, object *{{.Group}}.{{.Kind}}) (*{{.Group}}.{{.Kind}}, error) {
+	obj, err := s.Create(ctx, object)
+	if err != nil {
+		return nil, err
+	}
+	return obj.(*{{.Group}}.{{.Kind}}), nil
+}
+
+func (s *storage{{.Kind}}) Update{{.Kind}}(ctx genericapirequest.Context, object *{{.Group}}.{{.Kind}}) (*{{.Group}}.{{.Kind}}, error) {
+	obj, _, err := s.Update(ctx, object.Name, rest.DefaultUpdatedObjectInfo(object, api.Scheme))
+	if err != nil {
+		return nil, err
+	}
+	return obj.(*{{.Group}}.{{.Kind}}), nil
+}
+
+func (s *storage{{.Kind}}) Delete{{.Kind}}(ctx genericapirequest.Context, id string) error {
+	_, err := s.Delete(ctx, id, nil)
+	return err
+}
+
+
 `
 
 type GroupTemplateArgs struct {

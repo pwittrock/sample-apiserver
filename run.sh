@@ -23,14 +23,26 @@ apis="$REPO/apis/..."
 input="$apis,k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/api/resource/,k8s.io/apimachinery/pkg/version/,k8s.io/apimachinery/pkg/runtime/,k8s.io/apimachinery/pkg//util/intstr/"
 peers="k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/conversion,k8s.io/apimachinery/pkg/runtime"
 
+DO_WIRING=${DO_WIRING:-true}
+if [ "$DO_WIRING" = true ]; then
 echo "Generating wiring"
 /usr/local/go/bin/go run $GENGO/vendor/k8s.io/apiserver-builder/cmd/genwiring/main.go --input-dirs "$REPO/apis/..."
+fi
 
+DO_CONVERSIONS=${DO_CONVERSIONS:-true}
+if [ "$DO_CONVERSIONS" = true ]; then
 echo "Generating conversions"
 /usr/local/go/bin/go run $GO2IDL/conversion-gen/main.go -i "$REPO/apis/..."  --extra-peer-dirs=$peers -o $ROOT/src  -O zz_generated.conversion --go-header-file $GENGO/boilerplate.go.txt
+fi
 
+DO_DEEPCOPY=${DO_DEEPCOPY:-true}
+if [ "$DO_DEEPCOPY" = true ]; then
 echo "Generating deepcopy"
 /usr/local/go/bin/go run $GO2IDL/deepcopy-gen/main.go -i "$REPO/apis/..." -o $ROOT/src/ -O zz_generated.deepcopy --go-header-file $GENGO/boilerplate.go.txt
+fi
 
+DO_OPENAPI=${DO_OPENAPI:-true}
+if [ "$DO_OPENAPI" = true ]; then
 echo "Generating openapi"
 /usr/local/go/bin/go run $GO2IDL/openapi-gen/main.go  -i $input -o $ROOT/src --output-package $REPO/pkg/openapi --go-header-file $GENGO/boilerplate.go.txt
+fi

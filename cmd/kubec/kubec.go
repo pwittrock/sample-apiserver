@@ -16,6 +16,8 @@ limitations under the License.
 
 package main
 
+// kc init --repo-name github.com/pwittrock/test
+
 import (
 	"fmt"
 	"os"
@@ -38,12 +40,13 @@ import (
 
 var repoPath string
 var repoName string
-var repoPackage string
 var copyFrom string
 var domain string
 var types []string
-var goPath string
 var skipOpenApi bool
+var skipRegister bool
+var skipConversion bool
+var skipDeepCopy bool
 
 func main() {
 	if len(os.Getenv("GOMAXPROCS")) == 0 {
@@ -51,23 +54,23 @@ func main() {
 	}
 
 	cmd.AddCommand(initCmd, addTypesCmd, genCmd, genDocs)
-	initCmd.Flags().StringVar(&repoPath, "repo-path", "/out", "path to repo")
+	cmd.Flags().StringVar(&repoPath, "repo-path", "/out", "path to repo")
+	cmd.Flags().StringVar(&copyFrom, "from-path", "/go/src/github.com/pwittrock/apiserver-helloworld/", "path to repo to copy from")
+
 	initCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
-	initCmd.Flags().StringVar(&copyFrom, "from-path", "/go/src/github.com/pwittrock/apiserver-helloworld/", "path to repo to copy from")
 	initCmd.Flags().StringVar(&domain, "domain", "k8s.io", "domain group lives in")
 
 	addTypesCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
-	addTypesCmd.Flags().StringVar(&repoPath, "repo-path", "/out", "path to repo")
 	addTypesCmd.Flags().StringSliceVar(&types, "types", []string{}, "list of group/version/kind")
-	addTypesCmd.Flags().StringVar(&repoPackage, "repo-package", "", "repo package")
 	addTypesCmd.Flags().StringVar(&domain, "domain", "k8s.io", "domain group lives in")
 
 	genCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
-	genCmd.Flags().StringVar(&goPath, "go-path", "/out", "gopath")
+	genCmd.Flags().BoolVar(&skipRegister, "skip-register", false, "")
+	genCmd.Flags().BoolVar(&skipDeepCopy, "skip-deepcopy", false, "")
+	genCmd.Flags().BoolVar(&skipConversion, "skip-conversion", false, "")
+	genCmd.Flags().BoolVar(&skipOpenApi, "skip-openapi", false, "")
 
-	genDocs.Flags().StringVar(&copyFrom, "from-path", "/go/src/github.com/pwittrock/apiserver-helloworld/", "path to repo to copy from")
 	genDocs.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
-	genDocs.Flags().StringVar(&goPath, "go-path", "/out", "gopath")
 	genDocs.Flags().BoolVar(&skipOpenApi, "skip-openapi", false, "If true, don't generate swagger.json")
 
 	if err := cmd.Execute(); err != nil {
@@ -97,7 +100,7 @@ var genDocs = &cobra.Command{
 var bearerToken = regexp.MustCompile(`Local Authorization Token: (.+)$`)
 
 func RunGenDocsCmd(cmd *cobra.Command, args []string) {
-	dir := filepath.Join(goPath, "src", repoName)
+	dir := filepath.Join(repoPath, "src", repoName)
 
 	if !skipOpenApi {
 		config := fmt.Sprintf("%s/cmd/kubec/empty_config", copyFrom)
@@ -115,7 +118,7 @@ func RunGenDocsCmd(cmd *cobra.Command, args []string) {
 			"--tls-ca-file", cert,
 			"--print-bearer-token")
 		c.Env = append(c.Env, fmt.Sprintf("REPO=%s", repoName))
-		c.Env = append(c.Env, fmt.Sprintf("GOPATH=%s", goPath))
+		c.Env = append(c.Env, fmt.Sprintf("GOPATH=%s", repoPath))
 		c.Dir = dir
 
 		token := make(chan string)
@@ -295,7 +298,11 @@ var genCmd = &cobra.Command{
 func RunGenCmd(cmd *cobra.Command, args []string) {
 	c := exec.Command("./run.sh")
 	c.Env = append(c.Env, fmt.Sprintf("REPO=%s", repoName))
-	c.Env = append(c.Env, fmt.Sprintf("GOPATH=%s", goPath))
+	c.Env = append(c.Env, fmt.Sprintf("GOPATH=%s", repoPath))
+	c.Env = append(c.Env, fmt.Sprintf("DO_WIRING=%v", !skipRegister))
+	c.Env = append(c.Env, fmt.Sprintf("DO_CONVERSIONS=%v", !skipConversion))
+	c.Env = append(c.Env, fmt.Sprintf("DO_DEEPCOPY=%v", !skipDeepCopy))
+	c.Env = append(c.Env, fmt.Sprintf("DO_OPENAPI=%s", !skipOpenApi))
 	out, err := c.CombinedOutput()
 	if err != nil {
 		panic(fmt.Errorf("Error generating files: %v %s", err, out))
@@ -455,7 +462,7 @@ func RunAddTypes(cmd *cobra.Command, args []string) {
 			f.Close()
 
 			f, err = os.OpenFile(groupdocgo, os.O_WRONLY, 0)
-			err = t.Execute(f, NewDocTemplateArguments{version, filepath.Join(repoPackage, "apis", group), group})
+			err = t.Execute(f, NewDocTemplateArguments{version, filepath.Join(repoName, "apis", group), group})
 			if err != nil {
 				fmt.Println(err)
 			}

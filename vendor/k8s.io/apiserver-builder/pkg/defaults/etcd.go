@@ -18,15 +18,11 @@ package defaults
 
 import (
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
-	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/rest"
 )
-
-// rest implements a RESTStorage for ResourceDefinition services against etcd
-type APIStorage struct {
-	*registry.Store
-}
 
 type StorageFactory struct {
 	Scheme     *runtime.Scheme
@@ -40,7 +36,7 @@ type StorageStrategy interface {
 }
 
 // NewREST returns a RESTStorage object that will work against ResourceDefinition services.
-func (f *StorageFactory) Create(groupResource schema.GroupResource, resourceDef *ResourceDefinition) *APIStorage {
+func (f *StorageFactory) Create(groupResource schema.GroupResource, resourceDef *ResourceDefinition) rest.Storage {
 	store := &registry.Store{
 		Copier:            f.Scheme,
 		NewFunc:           resourceDef.StorageStrategy.NewFunc,
@@ -58,5 +54,5 @@ func (f *StorageFactory) Create(groupResource schema.GroupResource, resourceDef 
 	if err := store.CompleteWithOptions(options); err != nil {
 		panic(err) // TODO: Propagate error up
 	}
-	return &APIStorage{store}
+	return resourceDef.CreateStorageFunc(store)
 }

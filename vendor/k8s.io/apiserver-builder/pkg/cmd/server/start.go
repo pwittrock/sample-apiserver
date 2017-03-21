@@ -30,6 +30,7 @@ import (
 
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/openapi"
+	"k8s.io/client-go/pkg/api"
 )
 
 const defaultEtcdPathPrefix = "/registry/wardle.kubernetes.io"
@@ -51,7 +52,7 @@ func NewWardleServerOptions(out, errOut io.Writer, providers []defaults.Resource
 	}
 
 	o := &WardleServerOptions{
-		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, defaults.Scheme, defaults.Codecs.LegacyCodec(versions...)),
+		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, api.Scheme, api.Codecs.LegacyCodec(versions...)),
 
 		StdOut:       out,
 		StdErr:       errOut,
@@ -107,7 +108,7 @@ func (o WardleServerOptions) Config() (*apiserver.Config, error) {
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
 	}
 
-	serverConfig := genericapiserver.NewConfig().WithSerializer(defaults.Codecs)
+	serverConfig := genericapiserver.NewConfig().WithSerializer(api.Codecs)
 	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
 		return nil, err
 	}
@@ -143,7 +144,7 @@ func (o WardleServerOptions) RunWardleServer(stopCh <-chan struct{}) error {
 		return err
 	}
 
-	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(GetOpenApiDefinition, defaults.Scheme)
+	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(GetOpenApiDefinition, api.Scheme)
 	//config.GenericConfig.OpenAPIConfig.PostProcessSpec = postProcessOpenAPISpecForBackwardCompatibility
 	//config.GenericConfig.OpenAPIConfig.SecurityDefinitions = securityDefinitions
 	config.GenericConfig.OpenAPIConfig.Info.Title = "Wardle"

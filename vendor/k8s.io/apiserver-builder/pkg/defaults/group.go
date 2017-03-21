@@ -17,17 +17,16 @@ limitations under the License.
 package defaults
 
 import (
+	"github.com/golang/glog"
+	"github.com/pkg/errors"
+	"k8s.io/apimachinery/pkg/apimachinery/announced"
+	"k8s.io/apimachinery/pkg/apimachinery/registered"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	genericapiserver "k8s.io/apiserver/pkg/server"
-	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/apimachinery/pkg/apimachinery/announced"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/apimachinery/pkg/apimachinery/registered"
-	"github.com/pkg/errors"
-	"github.com/golang/glog"
+	"k8s.io/apiserver/pkg/registry/rest"
+	genericapiserver "k8s.io/apiserver/pkg/server"
 )
-
 
 // APIGroupFactory builds APIGroupInfos from ResourceDefinitions.  The APIGroupInfos
 // can be registered with an apiserver to start serving the resource.
@@ -92,6 +91,12 @@ func (f *APIGroupFactory) Create(resources []*ResourceDefinition) (*genericapise
 		}
 		apiGroupInfo.VersionedResourcesStorageMap[version][resource] =
 			f.StorageFactory.Create(groupResource, definition)
+
+		// Register sub-resources
+		for path, subdefinition := range definition.SubResources {
+			apiGroupInfo.VersionedResourcesStorageMap[version][path] =
+				f.StorageFactory.Create(groupResource, subdefinition)
+		}
 	}
 	return apiGroupInfo, nil
 }

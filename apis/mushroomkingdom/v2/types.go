@@ -1,11 +1,8 @@
-
-
 package v2
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
-
 
 // +genclient=true
 // +genapi=true
@@ -20,6 +17,7 @@ type PeachesCastle struct {
 }
 
 type PeachesCastleSpec struct {
+	Mushrooms int `json:"mushrooms,omitempty"`
 }
 
 type PeachesCastleStatus struct {

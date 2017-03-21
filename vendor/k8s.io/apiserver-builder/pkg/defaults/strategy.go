@@ -29,6 +29,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
+	"k8s.io/client-go/pkg/api"
 )
 
 type BasicCreateDeleteUpdateStrategy struct {
@@ -45,12 +46,12 @@ type HasObjectMeta interface {
 }
 
 // Create a new Basic
-func NewBasicStrategy(typer runtime.ObjectTyper) BasicCreateDeleteUpdateStrategy {
-	return BasicCreateDeleteUpdateStrategy{typer, names.SimpleNameGenerator}
+func NewBasicStrategy() BasicCreateDeleteUpdateStrategy {
+	return BasicCreateDeleteUpdateStrategy{api.Scheme, names.SimpleNameGenerator}
 }
 
 func (BasicCreateDeleteUpdateStrategy) NamespaceScoped() bool {
-	return false
+	return true
 }
 
 func (BasicCreateDeleteUpdateStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {

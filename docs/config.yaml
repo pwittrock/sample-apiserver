@@ -1,14 +1,14 @@
 example_location: "examples"
 api_groups:
   - "Wardle"
-  - "Hyrule"
+  - "MushroomKingdom"
 resource_categories:
-  - name: "Wardle Apis"
-    include: "wardle"
+  - name: "MushroomKingdom Apis"
+    include: "mushroomkingdom"
     resources:
-    - name: Flunder
-      version: v1alpha1
-      group: wardle
+    - name: PeachesCastle
+      version: v2
+      group: mushroomkingdom
   - name: "Hyrule Apis"
     include: "hyrule"
     resources:

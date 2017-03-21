@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 )
@@ -42,8 +43,9 @@ type ResourceDefinition struct {
 	CreateStrategy       rest.RESTCreateStrategy
 	DeleteStrategy       rest.RESTDeleteStrategy
 	UpdateStrategy       rest.RESTUpdateStrategy
-	SubResources         map[string]rest.Storage
+	SubResources         map[string]*ResourceDefinition
 	PredicateFunc        func(label labels.Selector, field fields.Selector) storage.SelectionPredicate
+	CreateStorageFunc    func(store *registry.Store) rest.Storage
 }
 
 func (api *ResourceDefinition) GetExternalGroupVersionResource() schema.GroupVersionResource {
@@ -52,4 +54,10 @@ func (api *ResourceDefinition) GetExternalGroupVersionResource() schema.GroupVer
 
 func (api *ResourceDefinition) GetInternalGroupVersionResource() schema.GroupVersionResource {
 	return api.GroupVersionResource.GroupResource().WithVersion(runtime.APIVersionInternal)
+}
+
+type HasStatus interface {
+	GetStatus() interface{}
+	SetStatus(status interface{})
+	GetNewStatus() interface{}
 }
