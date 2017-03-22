@@ -27,7 +27,7 @@ import (
 var (
 	// Package-wide variables from generator "zz_generated.api.register".
 	registerFn = func(scheme *runtime.Scheme) error {
-		scheme.AddKnownTypes(SchemeGroupVersion, &PeachesCastle{}, &PeachesCastleList{})
+		scheme.AddKnownTypes(SchemeGroupVersion, &PeachesCastle{}, &PeachesCastleList{}, &ScaleCastle{})
 		metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 		return nil
 	}

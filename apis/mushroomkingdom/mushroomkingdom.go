@@ -7,7 +7,6 @@ import (
 	"k8s.io/apiserver/pkg/registry/rest"
 )
 
-// +subresource=PeachesCastle,ScaleCastle,peachescastles/scale
 type DoScalePeachesCastle struct {
 	store PeachesCastleRegistry
 }

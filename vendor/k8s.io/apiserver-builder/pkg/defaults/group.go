@@ -17,6 +17,7 @@ limitations under the License.
 package defaults
 
 import (
+	"fmt"
 	"github.com/golang/glog"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apimachinery/announced"
@@ -94,6 +95,7 @@ func (f *APIGroupFactory) Create(resources []*ResourceDefinition) (*genericapise
 
 		// Register sub-resources
 		for path, subdefinition := range definition.SubResources {
+			fmt.Printf("\n\nRegistering %s\n\n", path)
 			apiGroupInfo.VersionedResourcesStorageMap[version][path] =
 				f.StorageFactory.Create(groupResource, subdefinition)
 		}

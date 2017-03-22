@@ -118,6 +118,9 @@ func (d *unversionedGenerator) PackageVars(c *generator.Context) []string {
 	for _, n := range d.versionedApiTypes {
 		types = append(types, fmt.Sprintf("&%s{}", n), fmt.Sprintf("&%sList{}", n))
 	}
+	for _, n := range d.subresources {
+		types = append(types, fmt.Sprintf("&%s{}", n.RequestKind))
+	}
 
 	t := strings.Join(types, ", ")
 	sw := generator.NewSnippetWriter(buffer, c, "$", "$")
@@ -225,7 +228,7 @@ func (d *unversionedGenerator) Finalize(context *generator.Context, w io.Writer)
 
 	// For each kind write the strategy, REST, storage, and Registry
 	for _, k := range d.GetListOfKinds() {
-		if err := Templates.kindTemplate.Execute(w, KindTemplateArgs{d.group, k}); err != nil {
+		if err := Templates.kindTemplate.Execute(w, KindTemplateArgs{d.group, k, d.subresources}); err != nil {
 			panic(errors.Errorf("Failed to execute template %v", err))
 		}
 	}

@@ -30,11 +30,12 @@ import (
 
 type versionedGenerator struct {
 	generator.DefaultGen
-	pkg          *types.Package
-	version      string
-	group        string
-	domain       string
-	apiTypeNames []string
+	pkg              *types.Package
+	version          string
+	group            string
+	domain           string
+	apiTypeNames     []string
+	subresourceNames []string
 }
 
 var _ generator.Generator = &versionedGenerator{}
@@ -42,6 +43,12 @@ var _ generator.Generator = &versionedGenerator{}
 func CreateVersionedGenerator(
 	c *generator.Context, pkg *types.Package, arguments *args.GeneratorArgs,
 	group string, version string, domain string) generator.Generator {
+	subresources := GetSubresources(c, group)
+	subresourceNames := []string{}
+	for _, sr := range subresources {
+		subresourceNames = append(subresourceNames, sr.RequestKind)
+	}
+
 	return &versionedGenerator{
 		generator.DefaultGen{OptionalName: arguments.OutputFileBaseName},
 		pkg,
@@ -49,6 +56,7 @@ func CreateVersionedGenerator(
 		group,
 		domain,
 		GetApiTypeNames(c, group),
+		subresourceNames,
 	}
 }
 
@@ -72,6 +80,9 @@ func (d *versionedGenerator) PackageVars(c *generator.Context) []string {
 	apiTypes := d.apiTypeNames
 	types := []string{}
 	for _, n := range apiTypes {
+		types = append(types, fmt.Sprintf("&%s{}", n))
+	}
+	for _, n := range d.subresourceNames {
 		types = append(types, fmt.Sprintf("&%s{}", n))
 	}
 

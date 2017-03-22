@@ -17,8 +17,9 @@ limitations under the License.
 package generators
 
 type KindTemplateArgs struct {
-	Group string
-	Kind  string
+	Group        string
+	Kind         string
+	SubResources map[string]SubResource
 }
 
 const kindTemplateName = "KindTemplate"
@@ -170,5 +171,18 @@ func (s *storage{{.Kind}}) Delete{{.Kind}}(ctx genericapirequest.Context, id str
 	return err
 }
 
+{{range $index, $element := .SubResources -}}
+// Strategy for {{$element.Path}}
+type {{$element.REST}}Strategy struct {
+	// Inherit the basic create, delete, update strategy.
+	{{.Kind}}Strategy
+}
+var {{$element.REST}}StrategySingleton = {{$element.REST}}Strategy{
+	*{{.Kind}}StrategySingleton,
+}
+var {{$element.REST}}StorageFn = func(store *genericregistry.Store) rest.Storage {
+	return &{{$element.REST}}{ New{{$element.Kind}}Registry(store) }
+}
 
+{{ end -}}
 `

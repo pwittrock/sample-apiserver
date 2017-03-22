@@ -31,7 +31,7 @@ import (
 
 func IsApiType(t *types.Type) bool {
 	for _, c := range t.CommentLines {
-		if strings.Contains(c, "+genapi=true") {
+		if strings.Contains(c, "+resource") {
 			return true
 		}
 	}
@@ -40,7 +40,7 @@ func IsApiType(t *types.Type) bool {
 
 func IsSubResource(t *types.Type) bool {
 	for _, c := range t.CommentLines {
-		if strings.Contains(c, "+genapi=subresource") {
+		if strings.Contains(c, "+subresource") {
 			return true
 		}
 	}
@@ -140,7 +140,7 @@ func GetSubresources(context *generator.Context, group string) map[string]SubRes
 		args := strings.Split(subresource, ",")
 
 		// Add to the list of subresource
-		sr := SubResource{args[0], args[1], args[2], o.Name.Name}
+		sr := SubResource{args[0], o.Name.Name, args[2], args[1]}
 		subresources[args[0]] = sr
 	}
 	return subresources

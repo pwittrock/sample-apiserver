@@ -37,6 +37,7 @@ var v2PeachesCastleApiDefinition = &defaults.ResourceDefinition{
 	mushroomkingdom.PeachesCastleStrategySingleton,
 	map[string]*defaults.ResourceDefinition{
 		"peachescastles/status": v2PeachesCastleStatusApiDefinition,
+		"peachescastles/scale":  v2PeachesCastleDoScalePeachesCastleApiDefinition,
 	},
 	mushroomkingdom.PeachesCastleStrategySingleton.BasicMatch,
 	func(store *genericregistry.Store) rest.Storage { return &mushroomkingdom.PeachesCastleStore{store} },
@@ -53,6 +54,28 @@ var v2PeachesCastleStatusApiDefinition = &defaults.ResourceDefinition{
 	func(store *genericregistry.Store) rest.Storage {
 		return &mushroomkingdom.PeachesCastleStatusStore{store}
 	},
+}
+
+//var v2PeachesCastleDoScalePeachesCastleApiDefinition = &defaults.ResourceDefinition{
+//	v2.SchemeGroupVersion.WithResource("peachescastles"),
+//	mushroomkingdom.DoScalePeachesCastleStrategySingleton,
+//	mushroomkingdom.DoScalePeachesCastleStrategySingleton,
+//	mushroomkingdom.DoScalePeachesCastleStrategySingleton,
+//	mushroomkingdom.DoScalePeachesCastleStrategySingleton,
+//	map[string]*defaults.ResourceDefinition{},
+//	mushroomkingdom.DoScalePeachesCastleStrategySingleton.BasicMatch,
+//	mushroomkingdom.DoScalePeachesCastleStorageFn,
+//}
+
+var v2PeachesCastleDoScalePeachesCastleApiDefinition = &defaults.ResourceDefinition{
+	v2.SchemeGroupVersion.WithResource("peachescastles"),
+	mushroomkingdom.DoScalePeachesCastleStrategySingleton,
+	mushroomkingdom.DoScalePeachesCastleStrategySingleton,
+	mushroomkingdom.DoScalePeachesCastleStrategySingleton,
+	mushroomkingdom.DoScalePeachesCastleStrategySingleton,
+	map[string]*defaults.ResourceDefinition{},
+	mushroomkingdom.DoScalePeachesCastleStrategySingleton.BasicMatch,
+	mushroomkingdom.DoScalePeachesCastleStorageFn,
 }
 
 // Order list of version preferences

@@ -115,7 +115,6 @@ func (c completedConfig) New() (*WardleServer, error) {
 		api.Codecs,
 	}
 
-	glog.Infof("Provider count %v", len(defaults.APIProviders))
 	for _, provider := range defaults.APIProviders {
 		apiGroupInfo, err := apiGroupFactory.Create(provider.GetResourceDefinitions())
 		if err != nil {

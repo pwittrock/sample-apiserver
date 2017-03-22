@@ -35,7 +35,7 @@ import (
 var (
 	// Package-wide variables from generator "zz_generated.api.register".
 	registerFn = func(scheme *runtime.Scheme) error {
-		scheme.AddKnownTypes(SchemeGroupVersion, &PeachesCastle{}, &PeachesCastleList{})
+		scheme.AddKnownTypes(SchemeGroupVersion, &PeachesCastle{}, &PeachesCastleList{}, &ScaleCastle{})
 		metav1.AddToGroupVersion(scheme, SchemeGroupVersion)
 		return nil
 	}
@@ -60,13 +60,13 @@ func (DoScalePeachesCastle) New() runtime.Object {
 // +genclient=true
 
 type PeachesCastle struct {
+	metav1.ObjectMeta
+
 	Spec PeachesCastleSpec
 
 	Status PeachesCastleStatus
 
 	metav1.TypeMeta
-
-	metav1.ObjectMeta
 }
 
 type PeachesCastleList struct {
@@ -232,4 +232,17 @@ func (s *storagePeachesCastle) UpdatePeachesCastle(ctx genericapirequest.Context
 func (s *storagePeachesCastle) DeletePeachesCastle(ctx genericapirequest.Context, id string) error {
 	_, err := s.Delete(ctx, id, nil)
 	return err
+}
+
+// Strategy for peachescastles/scale
+type DoScalePeachesCastleStrategy struct {
+	// Inherit the basic create, delete, update strategy.
+	PeachesCastleStrategy
+}
+
+var DoScalePeachesCastleStrategySingleton = DoScalePeachesCastleStrategy{
+	*PeachesCastleStrategySingleton,
+}
+var DoScalePeachesCastleStorageFn = func(store *genericregistry.Store) rest.Storage {
+	return &DoScalePeachesCastle{NewPeachesCastleRegistry(store)}
 }

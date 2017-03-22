@@ -39,6 +39,7 @@ func RegisterDeepCopies(scheme *runtime.Scheme) error {
 	return scheme.AddGeneratedDeepCopyFuncs(
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_DefaultPeachesCastleStrategy, InType: reflect.TypeOf(&DefaultPeachesCastleStrategy{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_DoScalePeachesCastle, InType: reflect.TypeOf(&DoScalePeachesCastle{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_DoScalePeachesCastleStrategy, InType: reflect.TypeOf(&DoScalePeachesCastleStrategy{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastle, InType: reflect.TypeOf(&PeachesCastle{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastleList, InType: reflect.TypeOf(&PeachesCastleList{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastleSpec, InType: reflect.TypeOf(&PeachesCastleSpec{})},
@@ -77,6 +78,18 @@ func DeepCopy_mushroomkingdom_DoScalePeachesCastle(in interface{}, out interface
 			} else {
 				out.store = *newVal.(*PeachesCastleRegistry)
 			}
+		}
+		return nil
+	}
+}
+
+func DeepCopy_mushroomkingdom_DoScalePeachesCastleStrategy(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*DoScalePeachesCastleStrategy)
+		out := out.(*DoScalePeachesCastleStrategy)
+		*out = *in
+		if err := DeepCopy_mushroomkingdom_PeachesCastleStrategy(&in.PeachesCastleStrategy, &out.PeachesCastleStrategy, c); err != nil {
+			return err
 		}
 		return nil
 	}

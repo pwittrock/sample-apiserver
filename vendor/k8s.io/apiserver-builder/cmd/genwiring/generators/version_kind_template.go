@@ -28,6 +28,7 @@ type VersionKindTemplateArgs struct {
 
 const versionKindTemplateName = "VersionKindTemplate"
 const versionKindTemplateString = `
+{{with $args := . -}}
 // Definition used to register {{.Name}} with the apiserver
 var {{.Name}}ApiDefinition = &defaults.ResourceDefinition{
 	{{.Version}}.SchemeGroupVersion.WithResource("{{.Resource}}"),
@@ -37,6 +38,9 @@ var {{.Name}}ApiDefinition = &defaults.ResourceDefinition{
 	{{.Group}}.{{.Kind}}StrategySingleton,
 	map[string]*defaults.ResourceDefinition{
 		"{{.Resource}}/status": {{.Name}}StatusApiDefinition,
+		{{range $index, $element := .SubResources -}}
+		"{{$element.Path}}": {{$args.Name}}{{$element.REST}}ApiDefinition,
+		{{end -}}
 	},
 	{{.Group}}.{{.Kind}}StrategySingleton.BasicMatch,
 	func(store *genericregistry.Store) rest.Storage { return &{{.Group}}.{{.Kind}}Store{store} },
@@ -53,4 +57,30 @@ var {{.Name}}StatusApiDefinition = &defaults.ResourceDefinition{
 	func(store *genericregistry.Store) rest.Storage { return &{{.Group}}.{{.Kind}}StatusStore{store} },
 }
 
+{{range $index, $element := .SubResources -}}
+//var {{$args.Name}}{{$element.REST}}ApiDefinition = &defaults.ResourceDefinition{
+//	{{$args.Version}}.SchemeGroupVersion.WithResource("{{$args.Resource}}"),
+//	{{$args.Group}}.{{$element.REST}}StrategySingleton,
+//	{{$args.Group}}.{{$element.REST}}StrategySingleton,
+//	{{$args.Group}}.{{$element.REST}}StrategySingleton,
+//	{{$args.Group}}.{{$element.REST}}StrategySingleton,
+//	map[string]*defaults.ResourceDefinition{},
+//	{{$args.Group}}.{{$element.REST}}StrategySingleton.BasicMatch,
+//	{{$args.Group}}.{{$element.REST}}StorageFn,
+//}
+
+var {{$args.Name}}{{$element.REST}}ApiDefinition = &defaults.ResourceDefinition{
+	{{$args.Version}}.SchemeGroupVersion.WithResource("{{$args.Resource}}"),
+	{{$args.Group}}.{{$element.REST}}StrategySingleton,
+	{{$args.Group}}.{{$element.REST}}StrategySingleton,
+	{{$args.Group}}.{{$element.REST}}StrategySingleton,
+	{{$args.Group}}.{{$element.REST}}StrategySingleton,
+	map[string]*defaults.ResourceDefinition{},
+	{{$args.Group}}.{{$element.REST}}StrategySingleton.BasicMatch,
+	{{$args.Group}}.{{$element.REST}}StorageFn,
+}
+
+
+{{ end -}}
+{{ end -}}
 `

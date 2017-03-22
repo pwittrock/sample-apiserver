@@ -5,9 +5,8 @@ import (
 )
 
 // +genclient=true
-// +genapi=true
-// +resource=peachescastles
 // +k8s:openapi-gen=true
+// +resource=peachescastles
 type PeachesCastle struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -23,7 +22,7 @@ type PeachesCastleSpec struct {
 type PeachesCastleStatus struct {
 }
 
-// +genapi=subresource
+// +subresource=PeachesCastle,DoScalePeachesCastle,peachescastles/scale
 type ScaleCastle struct {
 	metav1.TypeMeta
 	// Standard object metadata; More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata.
