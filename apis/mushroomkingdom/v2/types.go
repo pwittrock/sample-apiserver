@@ -22,3 +22,11 @@ type PeachesCastleSpec struct {
 
 type PeachesCastleStatus struct {
 }
+
+// +genapi=subresource
+type ScaleCastle struct {
+	metav1.TypeMeta
+	// Standard object metadata; More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata.
+	// +optional
+	metav1.ObjectMeta
+}

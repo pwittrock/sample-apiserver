@@ -128,7 +128,6 @@ func (g *Gen) Packages(context *generator.Context, arguments *args.GeneratorArgs
 	// Do the base Api package
 	pkg = context.Universe[apisPkg]
 	if pkg != nil {
-		//glog.Infof("Considering apis pkg %q", apisPkg)
 		for _, group := range groups {
 			factory := &packageFactory{pkg, arguments}
 			g.p = append(g.p, factory.createPackage(CreateApisGenerator(

@@ -24,7 +24,6 @@ import (
 	mushroomkingdom "github.com/pwittrock/apiserver-helloworld/apis/mushroomkingdom"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	unsafe "unsafe"
 )
 
 func init() {
@@ -43,6 +42,8 @@ func RegisterConversions(scheme *runtime.Scheme) error {
 		Convert_mushroomkingdom_PeachesCastleSpec_To_v2_PeachesCastleSpec,
 		Convert_v2_PeachesCastleStatus_To_mushroomkingdom_PeachesCastleStatus,
 		Convert_mushroomkingdom_PeachesCastleStatus_To_v2_PeachesCastleStatus,
+		Convert_v2_ScaleCastle_To_mushroomkingdom_ScaleCastle,
+		Convert_mushroomkingdom_ScaleCastle_To_v2_ScaleCastle,
 	)
 }
 
@@ -62,13 +63,13 @@ func Convert_v2_PeachesCastle_To_mushroomkingdom_PeachesCastle(in *PeachesCastle
 }
 
 func autoConvert_mushroomkingdom_PeachesCastle_To_v2_PeachesCastle(in *mushroomkingdom.PeachesCastle, out *PeachesCastle, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_mushroomkingdom_PeachesCastleSpec_To_v2_PeachesCastleSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
 	}
 	if err := Convert_mushroomkingdom_PeachesCastleStatus_To_v2_PeachesCastleStatus(&in.Status, &out.Status, s); err != nil {
 		return err
 	}
+	out.ObjectMeta = in.ObjectMeta
 	return nil
 }
 
@@ -78,7 +79,17 @@ func Convert_mushroomkingdom_PeachesCastle_To_v2_PeachesCastle(in *mushroomkingd
 
 func autoConvert_v2_PeachesCastleList_To_mushroomkingdom_PeachesCastleList(in *PeachesCastleList, out *mushroomkingdom.PeachesCastleList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	out.Items = *(*[]mushroomkingdom.PeachesCastle)(unsafe.Pointer(&in.Items))
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]mushroomkingdom.PeachesCastle, len(*in))
+		for i := range *in {
+			if err := Convert_v2_PeachesCastle_To_mushroomkingdom_PeachesCastle(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -88,7 +99,17 @@ func Convert_v2_PeachesCastleList_To_mushroomkingdom_PeachesCastleList(in *Peach
 
 func autoConvert_mushroomkingdom_PeachesCastleList_To_v2_PeachesCastleList(in *mushroomkingdom.PeachesCastleList, out *PeachesCastleList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	out.Items = *(*[]PeachesCastle)(unsafe.Pointer(&in.Items))
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]PeachesCastle, len(*in))
+		for i := range *in {
+			if err := Convert_mushroomkingdom_PeachesCastle_To_v2_PeachesCastle(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -128,4 +149,22 @@ func autoConvert_mushroomkingdom_PeachesCastleStatus_To_v2_PeachesCastleStatus(i
 
 func Convert_mushroomkingdom_PeachesCastleStatus_To_v2_PeachesCastleStatus(in *mushroomkingdom.PeachesCastleStatus, out *PeachesCastleStatus, s conversion.Scope) error {
 	return autoConvert_mushroomkingdom_PeachesCastleStatus_To_v2_PeachesCastleStatus(in, out, s)
+}
+
+func autoConvert_v2_ScaleCastle_To_mushroomkingdom_ScaleCastle(in *ScaleCastle, out *mushroomkingdom.ScaleCastle, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	return nil
+}
+
+func Convert_v2_ScaleCastle_To_mushroomkingdom_ScaleCastle(in *ScaleCastle, out *mushroomkingdom.ScaleCastle, s conversion.Scope) error {
+	return autoConvert_v2_ScaleCastle_To_mushroomkingdom_ScaleCastle(in, out, s)
+}
+
+func autoConvert_mushroomkingdom_ScaleCastle_To_v2_ScaleCastle(in *mushroomkingdom.ScaleCastle, out *ScaleCastle, s conversion.Scope) error {
+	out.ObjectMeta = in.ObjectMeta
+	return nil
+}
+
+func Convert_mushroomkingdom_ScaleCastle_To_v2_ScaleCastle(in *mushroomkingdom.ScaleCastle, out *ScaleCastle, s conversion.Scope) error {
+	return autoConvert_mushroomkingdom_ScaleCastle_To_v2_ScaleCastle(in, out, s)
 }

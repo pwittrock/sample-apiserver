@@ -39,6 +39,7 @@ func RegisterDeepCopies(scheme *runtime.Scheme) error {
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v2_PeachesCastleList, InType: reflect.TypeOf(&PeachesCastleList{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v2_PeachesCastleSpec, InType: reflect.TypeOf(&PeachesCastleSpec{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v2_PeachesCastleStatus, InType: reflect.TypeOf(&PeachesCastleStatus{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_v2_ScaleCastle, InType: reflect.TypeOf(&ScaleCastle{})},
 	)
 }
 
@@ -88,6 +89,20 @@ func DeepCopy_v2_PeachesCastleStatus(in interface{}, out interface{}, c *convers
 		in := in.(*PeachesCastleStatus)
 		out := out.(*PeachesCastleStatus)
 		*out = *in
+		return nil
+	}
+}
+
+func DeepCopy_v2_ScaleCastle(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*ScaleCastle)
+		out := out.(*ScaleCastle)
+		*out = *in
+		if newVal, err := c.DeepCopy(&in.ObjectMeta); err != nil {
+			return err
+		} else {
+			out.ObjectMeta = *newVal.(*v1.ObjectMeta)
+		}
 		return nil
 	}
 }

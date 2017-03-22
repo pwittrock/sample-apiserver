@@ -40,6 +40,9 @@ type unversionedGenerator struct {
 	typesByKindVersion    map[string]map[string]*types.Type
 	allTypesByKindVersion map[string]map[string]*types.Type
 	versionedApiTypes     []string
+
+	subresourceApiTypes []string
+	subresources        map[string]SubResource
 }
 
 var _ generator.Generator = &unversionedGenerator{}
@@ -49,8 +52,11 @@ const unversioned = "unversioned"
 func CreateUnversionedGenerator(
 	context *generator.Context, pkg *types.Package, arguments *args.GeneratorArgs,
 	group string, domain string) generator.Generator {
+	subresources := GetSubresources(context, group)
 
-	versionedApiTypes, unversionedApiTypes := GetVersionedAndUnversioned(context, group)
+	//typesByVersionKind, typesByKindVersion, unversionedApiTypes := GetIndexedTypes(context, group)
+
+	versionedApiTypes, unversionedApiTypes, subresourceApiTypes := GetVersionedAndUnversioned(context, group)
 	typesByVersionKind, typesByKindVersion := IndexByVersionAndKind(
 		context, group, versionedApiTypes, unversionedApiTypes)
 
@@ -63,7 +69,16 @@ func CreateUnversionedGenerator(
 	toImport.Insert(
 		"metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"",
 		"k8s.io/apimachinery/pkg/runtime",
-		"k8s.io/apimachinery/pkg/runtime/schema")
+		"k8s.io/apimachinery/pkg/runtime/schema",
+		"genericapirequest \"k8s.io/apiserver/pkg/endpoints/request\"",
+		"genericregistry \"k8s.io/apiserver/pkg/registry/generic/registry\"",
+		"metainternalversion \"k8s.io/apimachinery/pkg/apis/meta/internalversion\"",
+		"k8s.io/apiserver-builder/pkg/defaults",
+		"fmt",
+		"k8s.io/apiserver/pkg/registry/rest",
+		"reflect",
+		"k8s.io/client-go/pkg/api",
+	)
 
 	return &unversionedGenerator{
 		generator.DefaultGen{OptionalName: arguments.OutputFileBaseName},
@@ -75,108 +90,9 @@ func CreateUnversionedGenerator(
 		typesByKindVersion,
 		allTypesByKindVersion,
 		versionedApiTypes.List(),
+		subresourceApiTypes.List(),
+		subresources,
 	}
-}
-
-func GetVersionedAndUnversioned(context *generator.Context, group string) (
-	sets.String, sets.String) {
-	versionedApiTypes := sets.NewString()
-	unversionedApiTypes := sets.NewString()
-	for _, c := range context.Order {
-		if IsVersioned(c, group) && IsApiType(c) {
-			// Find versioned types that are API types
-			versionedApiTypes.Insert(c.Name.Name)
-		}
-	}
-
-	for _, c := range context.Order {
-		if IsUnversioned(c, group) && versionedApiTypes.Has(c.Name.Name) {
-			// The only way to tell if an unversioned type is an api type is by checking if there is a versioned
-			// type with the same name
-			unversionedApiTypes.Insert(c.Name.Name)
-		}
-	}
-	return versionedApiTypes, unversionedApiTypes
-}
-
-func IndexByVersionAndKind(context *generator.Context, group string, versionedSet, unversionedSet sets.String) (
-	map[string]map[string]*types.Type, map[string]map[string]*types.Type) {
-
-	typesByVersionKind := map[string]map[string]*types.Type{}
-	typesByKindVersion := map[string]map[string]*types.Type{}
-	for _, c := range context.Order {
-		// Not in the group
-		if GetGroup(c) != group {
-			continue
-		}
-		// Not an api type
-		if !versionedSet.Has(c.Name.Name) && !unversionedSet.Has(c.Name.Name) {
-			continue
-		}
-
-		version := unversioned
-		if IsVersioned(c, group) {
-			version = GetVersion(c, group)
-		}
-		if _, f := typesByVersionKind[version]; !f {
-			typesByVersionKind[version] = map[string]*types.Type{}
-		}
-		if _, f := typesByKindVersion[c.Name.Name]; !f {
-			typesByKindVersion[c.Name.Name] = map[string]*types.Type{}
-		}
-		typesByVersionKind[version][c.Name.Name] = c
-		typesByKindVersion[c.Name.Name][version] = c
-	}
-	return typesByVersionKind, typesByKindVersion
-}
-
-func GetAllVersionedAndUnversioned(context *generator.Context, group string) (
-	sets.String, sets.String) {
-	versionedApiTypes := sets.NewString()
-	unversionedApiTypes := sets.NewString()
-	for _, c := range context.Order {
-		if IsVersioned(c, group) {
-			versionedApiTypes.Insert(c.Name.Name)
-		}
-	}
-
-	for _, c := range context.Order {
-		if IsUnversioned(c, group) && versionedApiTypes.Has(c.Name.Name) {
-			unversionedApiTypes.Insert(c.Name.Name)
-		}
-	}
-	return versionedApiTypes, unversionedApiTypes
-}
-
-func IndexAllByVersionAndKind(context *generator.Context, group string, versionedSet, unversionedSet sets.String) (
-	map[string]map[string]*types.Type, map[string]map[string]*types.Type) {
-
-	typesByVersionKind := map[string]map[string]*types.Type{}
-	typesByKindVersion := map[string]map[string]*types.Type{}
-	for _, c := range context.Order {
-		// Not in the group
-		if GetGroup(c) != group {
-			continue
-		}
-		// Not an api type
-		if !versionedSet.Has(c.Name.Name) && !unversionedSet.Has(c.Name.Name) {
-			continue
-		}
-
-		version := unversioned
-		if IsVersioned(c, group) {
-			version = GetVersion(c, group)
-		}
-		if _, f := typesByVersionKind[version]; !f {
-			typesByVersionKind[version] = map[string]*types.Type{}
-		}
-		if _, f := typesByKindVersion[c.Name.Name]; !f {
-			typesByKindVersion[c.Name.Name] = map[string]*types.Type{}
-		}
-		typesByVersionKind[version][c.Name.Name] = c
-		typesByKindVersion[c.Name.Name][version] = c
-	}
-	return typesByVersionKind, typesByKindVersion
 }
 
 func (d *unversionedGenerator) Init(*generator.Context, io.Writer) error {
@@ -275,10 +191,18 @@ func (d *unversionedGenerator) CreateGenerateTypesList() []GenerateTypes {
 	for _, k := range d.versionedApiTypes {
 		types = append(types, d.CreateGenerateTypes(k, true))
 	}
+	for _, k := range d.subresourceApiTypes {
+		types = append(types, d.CreateGenerateTypes(k, false))
+	}
 	return types
 }
 
 func (d *unversionedGenerator) Finalize(context *generator.Context, w io.Writer) error {
+	for _, sr := range d.subresources {
+		fmt.Printf("Doing Sub %s\n", sr.Path)
+		Templates.subresourceTemplate.Execute(w, sr)
+	}
+
 	toGenerate := d.CreateGenerateTypesList()
 	generated := sets.String{}
 
@@ -299,7 +223,25 @@ func (d *unversionedGenerator) Finalize(context *generator.Context, w io.Writer)
 		toGenerate = append(toGenerate, nextGen...)
 	}
 
+	// For each kind write the strategy, REST, storage, and Registry
+	for _, k := range d.GetListOfKinds() {
+		if err := Templates.kindTemplate.Execute(w, KindTemplateArgs{d.group, k}); err != nil {
+			panic(errors.Errorf("Failed to execute template %v", err))
+		}
+	}
+
 	return nil
+}
+
+// GetListOfKinds returns the list of unique kinds in the group
+func (d *unversionedGenerator) GetListOfKinds() []string {
+	kinds := sets.String{}
+	for _, m := range d.typesByVersionKind {
+		for _, t := range m {
+			kinds.Insert(t.Name.Name)
+		}
+	}
+	return kinds.List()
 }
 
 func (d *unversionedGenerator) DoType(c *generator.Context, versionedTypes GenerateTypes, w io.Writer) ([]GenerateTypes, error) {

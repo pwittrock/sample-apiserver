@@ -246,6 +246,28 @@ func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.Ope
 			},
 			Dependencies: []string{},
 		},
+		"github.com/pwittrock/apiserver-helloworld/apis/mushroomkingdom/v2.ScaleCastle": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Properties: map[string]spec.Schema{
+						"TypeMeta": {
+							SchemaProps: spec.SchemaProps{
+								Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta"),
+							},
+						},
+						"ObjectMeta": {
+							SchemaProps: spec.SchemaProps{
+								Description: "Standard object metadata; More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata.",
+								Ref:         ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							},
+						},
+					},
+					Required: []string{"TypeMeta"},
+				},
+			},
+			Dependencies: []string{
+				"k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta", "k8s.io/apimachinery/pkg/apis/meta/v1.TypeMeta"},
+		},
 		"k8s.io/apimachinery/pkg/api/resource.Quantity": resource.Quantity{}.OpenAPIDefinition(),
 		"k8s.io/apimachinery/pkg/api/resource.int64Amount": {
 			Schema: spec.Schema{

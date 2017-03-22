@@ -19,210 +19,40 @@ limitations under the License.
 package apis
 
 import (
-	"fmt"
 	"github.com/pwittrock/apiserver-helloworld/apis/mushroomkingdom"
 	"github.com/pwittrock/apiserver-helloworld/apis/mushroomkingdom/v2"
 	"k8s.io/apimachinery/pkg/apimachinery/announced"
-	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver-builder/pkg/defaults"
-	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/client-go/pkg/api"
-	"reflect"
 )
-
-///////////////////////////////////////////////////////////////////////////////
-// PeachesCastle End user functions //
-///////////////////////////////////////////////////////////////////////////////
-
-// Add functions to this type in order to override the default behaviors
-type PeachesCastleStrategy struct {
-	DefaultPeachesCastleStrategy
-}
-
-// Add functions to this type in order to override the default behaviors
-type PeachesCastleStore struct {
-	*genericregistry.Store
-}
-
-// Add functions to this type in order to override the default behaviors
-type PeachesCastleStatusStore struct {
-	*genericregistry.Store
-}
-
-// Registry is an interface for things that know how to store PeachesCastle.
-type PeachesCastleRegistry interface {
-	ListPeachesCastles(ctx genericapirequest.Context, options *metainternalversion.ListOptions) (*mushroomkingdom.PeachesCastleList, error)
-	GetPeachesCastle(ctx genericapirequest.Context, id string, options *metav1.GetOptions) (*mushroomkingdom.PeachesCastle, error)
-	CreatePeachesCastle(ctx genericapirequest.Context, id *mushroomkingdom.PeachesCastle) (*mushroomkingdom.PeachesCastle, error)
-	UpdatePeachesCastle(ctx genericapirequest.Context, id *mushroomkingdom.PeachesCastle) (*mushroomkingdom.PeachesCastle, error)
-	DeletePeachesCastle(ctx genericapirequest.Context, id string) error
-}
-
-// NewRegistry returns a new Registry interface for the given Storage. Any mismatched types will panic.
-func NewPeachesCastleRegistry(s rest.StandardStorage) PeachesCastleRegistry {
-	return &storagePeachesCastle{s}
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// PeachesCastle System functions //
-///////////////////////////////////////////////////////////////////////////////
-
-// Use the override strategy and embedd the defaults for anything not override.
-var singletonPeachesCastleStrategy = &PeachesCastleStrategy{
-	DefaultPeachesCastleStrategy{ // Overide some methods
-		defaults.NewBasicStrategy(), // Use defaults
-	},
-}
-
-// Default Strategy for PeachesCastle
-type DefaultPeachesCastleStrategy struct {
-	// Inherit the basic create, delete, update strategy.
-	defaults.BasicCreateDeleteUpdateStrategy
-}
-
-// NewFunc returns a new empty PeachesCastle
-func (r DefaultPeachesCastleStrategy) NewFunc() runtime.Object {
-	return &mushroomkingdom.PeachesCastle{}
-}
-
-// NewListFunc returns a new empty List of PeachesCastle
-func (r DefaultPeachesCastleStrategy) NewListFunc() runtime.Object {
-	return &mushroomkingdom.PeachesCastleList{}
-}
-
-// ObjectNameFunc returns the name for a PeachesCastle
-func (r DefaultPeachesCastleStrategy) ObjectNameFunc(obj runtime.Object) (string, error) {
-	return obj.(*mushroomkingdom.PeachesCastle).Name, nil
-}
-
-func (PeachesCastleStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
-	o := obj.(*mushroomkingdom.PeachesCastle)
-	o.Status = mushroomkingdom.PeachesCastleStatus{}
-	o.Generation = 1
-}
-
-func (PeachesCastleStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
-	newPeachesCastle := obj.(*mushroomkingdom.PeachesCastle)
-	oldPeachesCastle := old.(*mushroomkingdom.PeachesCastle)
-	newPeachesCastle.Status = oldPeachesCastle.Status
-
-	// Spec and annotation updates bump the generation.
-	if !reflect.DeepEqual(newPeachesCastle.Spec, oldPeachesCastle.Spec) ||
-		!reflect.DeepEqual(newPeachesCastle.Annotations, oldPeachesCastle.Annotations) {
-		newPeachesCastle.Generation = oldPeachesCastle.Generation + 1
-	}
-}
-
-// Implement Status endpoint
-// StatusREST implements the REST endpoint for changing the status of a deployment
-type PeachesCastleStatusStrategy struct {
-	PeachesCastleStrategy
-}
-
-// singletonPeachesCastleStatusStrategy contains the cross-cutting storage
-var singletonPeachesCastleStatusStrategy = PeachesCastleStatusStrategy{*singletonPeachesCastleStrategy}
-
-//// PeachesCastleStatusREST contains the REST method implementations
-//type PeachesCastleStatusREST struct {
-//	store *genericregistry.Store
-//}
-//
-//func (r PeachesCastleStatusREST) New() runtime.Object {
-//	return &mushroomkingdom.PeachesCastle{}
-//}
-//
-//// Get retrieves the object from the storage. It is required to support Patch.
-//func (r PeachesCastleStatusREST) Get(ctx genericapirequest.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-//	return r.store.Get(ctx, name, options)
-//}
-//
-//// Update alters the status subset of an object.
-//func (r PeachesCastleStatusREST) Update(ctx genericapirequest.Context, name string, objInfo rest.UpdatedObjectInfo) (runtime.Object, bool, error) {
-//	return r.store.Update(ctx, name, objInfo)
-//}
-
-// PrepareForUpdate clears fields that are not allowed to be set by end users on update of status
-func (PeachesCastleStatusStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
-	newPeachesCastle := obj.(*mushroomkingdom.PeachesCastle)
-	oldPeachesCastle := old.(*mushroomkingdom.PeachesCastle)
-	newPeachesCastle.Spec = oldPeachesCastle.Spec
-	newPeachesCastle.Labels = oldPeachesCastle.Labels
-}
-
-// Implement Registry
-// storage puts strong typing around storage calls
-type storagePeachesCastle struct {
-	rest.StandardStorage
-}
-
-func (s *storagePeachesCastle) ListPeachesCastles(ctx genericapirequest.Context, options *metainternalversion.ListOptions) (*mushroomkingdom.PeachesCastleList, error) {
-	if options != nil && options.FieldSelector != nil && !options.FieldSelector.Empty() {
-		return nil, fmt.Errorf("field selector not supported yet")
-	}
-	obj, err := s.List(ctx, options)
-	if err != nil {
-		return nil, err
-	}
-	return obj.(*mushroomkingdom.PeachesCastleList), err
-}
-
-func (s *storagePeachesCastle) GetPeachesCastle(ctx genericapirequest.Context, id string, options *metav1.GetOptions) (*mushroomkingdom.PeachesCastle, error) {
-	obj, err := s.Get(ctx, id, options)
-	if err != nil {
-		return nil, err
-	}
-	return obj.(*mushroomkingdom.PeachesCastle), nil
-}
-
-func (s *storagePeachesCastle) CreatePeachesCastle(ctx genericapirequest.Context, object *mushroomkingdom.PeachesCastle) (*mushroomkingdom.PeachesCastle, error) {
-	obj, err := s.Create(ctx, object)
-	if err != nil {
-		return nil, err
-	}
-	return obj.(*mushroomkingdom.PeachesCastle), nil
-}
-
-func (s *storagePeachesCastle) UpdatePeachesCastle(ctx genericapirequest.Context, object *mushroomkingdom.PeachesCastle) (*mushroomkingdom.PeachesCastle, error) {
-	obj, _, err := s.Update(ctx, object.Name, rest.DefaultUpdatedObjectInfo(object, api.Scheme))
-	if err != nil {
-		return nil, err
-	}
-	return obj.(*mushroomkingdom.PeachesCastle), nil
-}
-
-func (s *storagePeachesCastle) DeletePeachesCastle(ctx genericapirequest.Context, id string) error {
-	_, err := s.Delete(ctx, id, nil)
-	return err
-}
 
 // Definition used to register v2PeachesCastle with the apiserver
 var v2PeachesCastleApiDefinition = &defaults.ResourceDefinition{
 	v2.SchemeGroupVersion.WithResource("peachescastles"),
-	singletonPeachesCastleStrategy,
-	singletonPeachesCastleStrategy,
-	singletonPeachesCastleStrategy,
-	singletonPeachesCastleStrategy,
+	mushroomkingdom.PeachesCastleStrategySingleton,
+	mushroomkingdom.PeachesCastleStrategySingleton,
+	mushroomkingdom.PeachesCastleStrategySingleton,
+	mushroomkingdom.PeachesCastleStrategySingleton,
 	map[string]*defaults.ResourceDefinition{
 		"peachescastles/status": v2PeachesCastleStatusApiDefinition,
 	},
-	singletonPeachesCastleStrategy.BasicMatch,
-	func(store *genericregistry.Store) rest.Storage { return &PeachesCastleStore{store} },
+	mushroomkingdom.PeachesCastleStrategySingleton.BasicMatch,
+	func(store *genericregistry.Store) rest.Storage { return &mushroomkingdom.PeachesCastleStore{store} },
 }
 
 var v2PeachesCastleStatusApiDefinition = &defaults.ResourceDefinition{
 	v2.SchemeGroupVersion.WithResource("peachescastles"),
-	singletonPeachesCastleStatusStrategy,
-	singletonPeachesCastleStatusStrategy,
-	singletonPeachesCastleStatusStrategy,
-	singletonPeachesCastleStatusStrategy,
+	mushroomkingdom.PeachesCastleStatusStrategySingleton,
+	mushroomkingdom.PeachesCastleStatusStrategySingleton,
+	mushroomkingdom.PeachesCastleStatusStrategySingleton,
+	mushroomkingdom.PeachesCastleStatusStrategySingleton,
 	map[string]*defaults.ResourceDefinition{},
-	singletonPeachesCastleStatusStrategy.BasicMatch,
-	func(store *genericregistry.Store) rest.Storage { return &PeachesCastleStatusStore{store} },
+	mushroomkingdom.PeachesCastleStatusStrategySingleton.BasicMatch,
+	func(store *genericregistry.Store) rest.Storage {
+		return &mushroomkingdom.PeachesCastleStatusStore{store}
+	},
 }
 
 // Order list of version preferences

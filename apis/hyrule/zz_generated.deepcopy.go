@@ -24,6 +24,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	defaults "k8s.io/apiserver-builder/pkg/defaults"
+	registry "k8s.io/apiserver/pkg/registry/generic/registry"
 	reflect "reflect"
 )
 
@@ -35,11 +37,30 @@ func init() {
 // to allow building arbitrary schemes.
 func RegisterDeepCopies(scheme *runtime.Scheme) error {
 	return scheme.AddGeneratedDeepCopyFuncs(
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_hyrule_DefaultHyruleCastleStrategy, InType: reflect.TypeOf(&DefaultHyruleCastleStrategy{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_hyrule_HyruleCastle, InType: reflect.TypeOf(&HyruleCastle{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_hyrule_HyruleCastleList, InType: reflect.TypeOf(&HyruleCastleList{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_hyrule_HyruleCastleSpec, InType: reflect.TypeOf(&HyruleCastleSpec{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_hyrule_HyruleCastleStatus, InType: reflect.TypeOf(&HyruleCastleStatus{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_hyrule_HyruleCastleStatusStore, InType: reflect.TypeOf(&HyruleCastleStatusStore{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_hyrule_HyruleCastleStatusStrategy, InType: reflect.TypeOf(&HyruleCastleStatusStrategy{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_hyrule_HyruleCastleStore, InType: reflect.TypeOf(&HyruleCastleStore{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_hyrule_HyruleCastleStrategy, InType: reflect.TypeOf(&HyruleCastleStrategy{})},
 	)
+}
+
+func DeepCopy_hyrule_DefaultHyruleCastleStrategy(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*DefaultHyruleCastleStrategy)
+		out := out.(*DefaultHyruleCastleStrategy)
+		*out = *in
+		if newVal, err := c.DeepCopy(&in.BasicCreateDeleteUpdateStrategy); err != nil {
+			return err
+		} else {
+			out.BasicCreateDeleteUpdateStrategy = *newVal.(*defaults.BasicCreateDeleteUpdateStrategy)
+		}
+		return nil
+	}
 }
 
 func DeepCopy_hyrule_HyruleCastle(in interface{}, out interface{}, c *conversion.Cloner) error {
@@ -88,6 +109,64 @@ func DeepCopy_hyrule_HyruleCastleStatus(in interface{}, out interface{}, c *conv
 		in := in.(*HyruleCastleStatus)
 		out := out.(*HyruleCastleStatus)
 		*out = *in
+		return nil
+	}
+}
+
+func DeepCopy_hyrule_HyruleCastleStatusStore(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*HyruleCastleStatusStore)
+		out := out.(*HyruleCastleStatusStore)
+		*out = *in
+		if in.Store != nil {
+			in, out := &in.Store, &out.Store
+			if newVal, err := c.DeepCopy(*in); err != nil {
+				return err
+			} else {
+				*out = newVal.(*registry.Store)
+			}
+		}
+		return nil
+	}
+}
+
+func DeepCopy_hyrule_HyruleCastleStatusStrategy(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*HyruleCastleStatusStrategy)
+		out := out.(*HyruleCastleStatusStrategy)
+		*out = *in
+		if err := DeepCopy_hyrule_HyruleCastleStrategy(&in.HyruleCastleStrategy, &out.HyruleCastleStrategy, c); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func DeepCopy_hyrule_HyruleCastleStore(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*HyruleCastleStore)
+		out := out.(*HyruleCastleStore)
+		*out = *in
+		if in.Store != nil {
+			in, out := &in.Store, &out.Store
+			if newVal, err := c.DeepCopy(*in); err != nil {
+				return err
+			} else {
+				*out = newVal.(*registry.Store)
+			}
+		}
+		return nil
+	}
+}
+
+func DeepCopy_hyrule_HyruleCastleStrategy(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*HyruleCastleStrategy)
+		out := out.(*HyruleCastleStrategy)
+		*out = *in
+		if err := DeepCopy_hyrule_DefaultHyruleCastleStrategy(&in.DefaultHyruleCastleStrategy, &out.DefaultHyruleCastleStrategy, c); err != nil {
+			return err
+		}
 		return nil
 	}
 }

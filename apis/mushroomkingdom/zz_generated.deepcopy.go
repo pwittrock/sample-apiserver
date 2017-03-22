@@ -24,6 +24,8 @@ import (
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
+	defaults "k8s.io/apiserver-builder/pkg/defaults"
+	registry "k8s.io/apiserver/pkg/registry/generic/registry"
 	reflect "reflect"
 )
 
@@ -35,11 +37,49 @@ func init() {
 // to allow building arbitrary schemes.
 func RegisterDeepCopies(scheme *runtime.Scheme) error {
 	return scheme.AddGeneratedDeepCopyFuncs(
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_DefaultPeachesCastleStrategy, InType: reflect.TypeOf(&DefaultPeachesCastleStrategy{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_DoScalePeachesCastle, InType: reflect.TypeOf(&DoScalePeachesCastle{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastle, InType: reflect.TypeOf(&PeachesCastle{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastleList, InType: reflect.TypeOf(&PeachesCastleList{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastleSpec, InType: reflect.TypeOf(&PeachesCastleSpec{})},
 		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastleStatus, InType: reflect.TypeOf(&PeachesCastleStatus{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastleStatusStore, InType: reflect.TypeOf(&PeachesCastleStatusStore{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastleStatusStrategy, InType: reflect.TypeOf(&PeachesCastleStatusStrategy{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastleStore, InType: reflect.TypeOf(&PeachesCastleStore{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_PeachesCastleStrategy, InType: reflect.TypeOf(&PeachesCastleStrategy{})},
+		conversion.GeneratedDeepCopyFunc{Fn: DeepCopy_mushroomkingdom_ScaleCastle, InType: reflect.TypeOf(&ScaleCastle{})},
 	)
+}
+
+func DeepCopy_mushroomkingdom_DefaultPeachesCastleStrategy(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*DefaultPeachesCastleStrategy)
+		out := out.(*DefaultPeachesCastleStrategy)
+		*out = *in
+		if newVal, err := c.DeepCopy(&in.BasicCreateDeleteUpdateStrategy); err != nil {
+			return err
+		} else {
+			out.BasicCreateDeleteUpdateStrategy = *newVal.(*defaults.BasicCreateDeleteUpdateStrategy)
+		}
+		return nil
+	}
+}
+
+func DeepCopy_mushroomkingdom_DoScalePeachesCastle(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*DoScalePeachesCastle)
+		out := out.(*DoScalePeachesCastle)
+		*out = *in
+		// in.store is kind 'Interface'
+		if in.store != nil {
+			if newVal, err := c.DeepCopy(&in.store); err != nil {
+				return err
+			} else {
+				out.store = *newVal.(*PeachesCastleRegistry)
+			}
+		}
+		return nil
+	}
 }
 
 func DeepCopy_mushroomkingdom_PeachesCastle(in interface{}, out interface{}, c *conversion.Cloner) error {
@@ -88,6 +128,78 @@ func DeepCopy_mushroomkingdom_PeachesCastleStatus(in interface{}, out interface{
 		in := in.(*PeachesCastleStatus)
 		out := out.(*PeachesCastleStatus)
 		*out = *in
+		return nil
+	}
+}
+
+func DeepCopy_mushroomkingdom_PeachesCastleStatusStore(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*PeachesCastleStatusStore)
+		out := out.(*PeachesCastleStatusStore)
+		*out = *in
+		if in.Store != nil {
+			in, out := &in.Store, &out.Store
+			if newVal, err := c.DeepCopy(*in); err != nil {
+				return err
+			} else {
+				*out = newVal.(*registry.Store)
+			}
+		}
+		return nil
+	}
+}
+
+func DeepCopy_mushroomkingdom_PeachesCastleStatusStrategy(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*PeachesCastleStatusStrategy)
+		out := out.(*PeachesCastleStatusStrategy)
+		*out = *in
+		if err := DeepCopy_mushroomkingdom_PeachesCastleStrategy(&in.PeachesCastleStrategy, &out.PeachesCastleStrategy, c); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func DeepCopy_mushroomkingdom_PeachesCastleStore(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*PeachesCastleStore)
+		out := out.(*PeachesCastleStore)
+		*out = *in
+		if in.Store != nil {
+			in, out := &in.Store, &out.Store
+			if newVal, err := c.DeepCopy(*in); err != nil {
+				return err
+			} else {
+				*out = newVal.(*registry.Store)
+			}
+		}
+		return nil
+	}
+}
+
+func DeepCopy_mushroomkingdom_PeachesCastleStrategy(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*PeachesCastleStrategy)
+		out := out.(*PeachesCastleStrategy)
+		*out = *in
+		if err := DeepCopy_mushroomkingdom_DefaultPeachesCastleStrategy(&in.DefaultPeachesCastleStrategy, &out.DefaultPeachesCastleStrategy, c); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func DeepCopy_mushroomkingdom_ScaleCastle(in interface{}, out interface{}, c *conversion.Cloner) error {
+	{
+		in := in.(*ScaleCastle)
+		out := out.(*ScaleCastle)
+		*out = *in
+		if newVal, err := c.DeepCopy(&in.ObjectMeta); err != nil {
+			return err
+		} else {
+			out.ObjectMeta = *newVal.(*v1.ObjectMeta)
+		}
 		return nil
 	}
 }

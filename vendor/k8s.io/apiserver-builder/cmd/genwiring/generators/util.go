@@ -38,6 +38,15 @@ func IsApiType(t *types.Type) bool {
 	return false
 }
 
+func IsSubResource(t *types.Type) bool {
+	for _, c := range t.CommentLines {
+		if strings.Contains(c, "+genapi=subresource") {
+			return true
+		}
+	}
+	return false
+}
+
 func IsUnversioned(t *types.Type, group string) bool {
 	return IsApisDir(filepath.Base(filepath.Dir(t.Name.Package))) && GetGroup(t) == group
 }
@@ -86,6 +95,7 @@ func (c Comments) GetTag(name string) string {
 	for _, c := range c {
 		prefix := fmt.Sprintf("+%s=", name)
 		if strings.HasPrefix(c, prefix) {
+			//fmt.Printf("Checking %s has %s %v\n", c, prefix, strings.HasPrefix(c, prefix))
 			return strings.TrimLeft(c, prefix)
 		}
 	}
@@ -111,6 +121,29 @@ func GetApiTypeNames(c *generator.Context, group string) []string {
 		types = append(types, fmt.Sprintf("%sList", o.Name.Name))
 	}
 	return types
+}
+
+func GetSubresources(context *generator.Context, group string) map[string]SubResource {
+	subresources := map[string]SubResource{}
+	// Find subresources
+	for _, o := range context.Order {
+		comments := Comments(o.CommentLines)
+		subresource := comments.GetTag("subresource")
+		if len(subresource) == 0 {
+			// Not a subresource
+			continue
+		}
+		fmt.Printf("Found Sub %s in group %s %s \n", subresource, GetGroup(o), group)
+		if !IsGroup(o, group) {
+			continue
+		}
+		args := strings.Split(subresource, ",")
+
+		// Add to the list of subresource
+		sr := SubResource{args[0], args[1], args[2], o.Name.Name}
+		subresources[args[0]] = sr
+	}
+	return subresources
 }
 
 func GetIndexedTypes(context *generator.Context, group string) (map[string]map[string]*types.Type, map[string]map[string]*types.Type, sets.String) {
@@ -158,4 +191,108 @@ func GetIndexedTypes(context *generator.Context, group string) (map[string]map[s
 	}
 
 	return typesByVersionKind, typesByKindVersion, unversionedApiTypes
+}
+
+func GetVersionedAndUnversioned(context *generator.Context, group string) (
+	sets.String, sets.String, sets.String) {
+	versionedApiTypes := sets.NewString()
+	unversionedApiTypes := sets.NewString()
+	subresourceApiTypes := sets.NewString()
+	for _, c := range context.Order {
+		if IsVersioned(c, group) && IsApiType(c) {
+			// Find versioned types that are API types
+			versionedApiTypes.Insert(c.Name.Name)
+		} else if IsVersioned(c, group) && IsSubResource(c) {
+			subresourceApiTypes.Insert(c.Name.Name)
+		}
+	}
+
+	for _, c := range context.Order {
+		if IsUnversioned(c, group) && versionedApiTypes.Has(c.Name.Name) {
+			// The only way to tell if an unversioned type is an api type is by checking if there is a versioned
+			// type with the same name
+			unversionedApiTypes.Insert(c.Name.Name)
+		}
+	}
+	return versionedApiTypes, unversionedApiTypes, subresourceApiTypes
+}
+
+func IndexByVersionAndKind(context *generator.Context, group string, versionedSet, unversionedSet sets.String) (
+	map[string]map[string]*types.Type, map[string]map[string]*types.Type) {
+
+	typesByVersionKind := map[string]map[string]*types.Type{}
+	typesByKindVersion := map[string]map[string]*types.Type{}
+	for _, c := range context.Order {
+		// Not in the group
+		if GetGroup(c) != group {
+			continue
+		}
+		// Not an api type
+		if !versionedSet.Has(c.Name.Name) && !unversionedSet.Has(c.Name.Name) {
+			continue
+		}
+
+		version := unversioned
+		if IsVersioned(c, group) {
+			version = GetVersion(c, group)
+		}
+		if _, f := typesByVersionKind[version]; !f {
+			typesByVersionKind[version] = map[string]*types.Type{}
+		}
+		if _, f := typesByKindVersion[c.Name.Name]; !f {
+			typesByKindVersion[c.Name.Name] = map[string]*types.Type{}
+		}
+		typesByVersionKind[version][c.Name.Name] = c
+		typesByKindVersion[c.Name.Name][version] = c
+	}
+	return typesByVersionKind, typesByKindVersion
+}
+
+func GetAllVersionedAndUnversioned(context *generator.Context, group string) (
+	sets.String, sets.String) {
+	versionedApiTypes := sets.NewString()
+	unversionedApiTypes := sets.NewString()
+	for _, c := range context.Order {
+		if IsVersioned(c, group) {
+			versionedApiTypes.Insert(c.Name.Name)
+		}
+	}
+
+	for _, c := range context.Order {
+		if IsUnversioned(c, group) && versionedApiTypes.Has(c.Name.Name) {
+			unversionedApiTypes.Insert(c.Name.Name)
+		}
+	}
+	return versionedApiTypes, unversionedApiTypes
+}
+
+func IndexAllByVersionAndKind(context *generator.Context, group string, versionedSet, unversionedSet sets.String) (
+	map[string]map[string]*types.Type, map[string]map[string]*types.Type) {
+
+	typesByVersionKind := map[string]map[string]*types.Type{}
+	typesByKindVersion := map[string]map[string]*types.Type{}
+	for _, c := range context.Order {
+		// Not in the group
+		if GetGroup(c) != group {
+			continue
+		}
+		// Not an api type
+		if !versionedSet.Has(c.Name.Name) && !unversionedSet.Has(c.Name.Name) {
+			continue
+		}
+
+		version := unversioned
+		if IsVersioned(c, group) {
+			version = GetVersion(c, group)
+		}
+		if _, f := typesByVersionKind[version]; !f {
+			typesByVersionKind[version] = map[string]*types.Type{}
+		}
+		if _, f := typesByKindVersion[c.Name.Name]; !f {
+			typesByKindVersion[c.Name.Name] = map[string]*types.Type{}
+		}
+		typesByVersionKind[version][c.Name.Name] = c
+		typesByKindVersion[c.Name.Name][version] = c
+	}
+	return typesByVersionKind, typesByKindVersion
 }

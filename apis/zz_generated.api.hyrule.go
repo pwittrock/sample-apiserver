@@ -19,210 +19,38 @@ limitations under the License.
 package apis
 
 import (
-	"fmt"
 	"github.com/pwittrock/apiserver-helloworld/apis/hyrule"
 	"github.com/pwittrock/apiserver-helloworld/apis/hyrule/v1"
 	"k8s.io/apimachinery/pkg/apimachinery/announced"
-	metainternalversion "k8s.io/apimachinery/pkg/apis/meta/internalversion"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apiserver-builder/pkg/defaults"
-	genericapirequest "k8s.io/apiserver/pkg/endpoints/request"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
-	"k8s.io/client-go/pkg/api"
-	"reflect"
 )
-
-///////////////////////////////////////////////////////////////////////////////
-// HyruleCastle End user functions //
-///////////////////////////////////////////////////////////////////////////////
-
-// Add functions to this type in order to override the default behaviors
-type HyruleCastleStrategy struct {
-	DefaultHyruleCastleStrategy
-}
-
-// Add functions to this type in order to override the default behaviors
-type HyruleCastleStore struct {
-	*genericregistry.Store
-}
-
-// Add functions to this type in order to override the default behaviors
-type HyruleCastleStatusStore struct {
-	*genericregistry.Store
-}
-
-// Registry is an interface for things that know how to store HyruleCastle.
-type HyruleCastleRegistry interface {
-	ListHyruleCastles(ctx genericapirequest.Context, options *metainternalversion.ListOptions) (*hyrule.HyruleCastleList, error)
-	GetHyruleCastle(ctx genericapirequest.Context, id string, options *metav1.GetOptions) (*hyrule.HyruleCastle, error)
-	CreateHyruleCastle(ctx genericapirequest.Context, id *hyrule.HyruleCastle) (*hyrule.HyruleCastle, error)
-	UpdateHyruleCastle(ctx genericapirequest.Context, id *hyrule.HyruleCastle) (*hyrule.HyruleCastle, error)
-	DeleteHyruleCastle(ctx genericapirequest.Context, id string) error
-}
-
-// NewRegistry returns a new Registry interface for the given Storage. Any mismatched types will panic.
-func NewHyruleCastleRegistry(s rest.StandardStorage) HyruleCastleRegistry {
-	return &storageHyruleCastle{s}
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// HyruleCastle System functions //
-///////////////////////////////////////////////////////////////////////////////
-
-// Use the override strategy and embedd the defaults for anything not override.
-var singletonHyruleCastleStrategy = &HyruleCastleStrategy{
-	DefaultHyruleCastleStrategy{ // Overide some methods
-		defaults.NewBasicStrategy(), // Use defaults
-	},
-}
-
-// Default Strategy for HyruleCastle
-type DefaultHyruleCastleStrategy struct {
-	// Inherit the basic create, delete, update strategy.
-	defaults.BasicCreateDeleteUpdateStrategy
-}
-
-// NewFunc returns a new empty HyruleCastle
-func (r DefaultHyruleCastleStrategy) NewFunc() runtime.Object {
-	return &hyrule.HyruleCastle{}
-}
-
-// NewListFunc returns a new empty List of HyruleCastle
-func (r DefaultHyruleCastleStrategy) NewListFunc() runtime.Object {
-	return &hyrule.HyruleCastleList{}
-}
-
-// ObjectNameFunc returns the name for a HyruleCastle
-func (r DefaultHyruleCastleStrategy) ObjectNameFunc(obj runtime.Object) (string, error) {
-	return obj.(*hyrule.HyruleCastle).Name, nil
-}
-
-func (HyruleCastleStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
-	o := obj.(*hyrule.HyruleCastle)
-	o.Status = hyrule.HyruleCastleStatus{}
-	o.Generation = 1
-}
-
-func (HyruleCastleStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
-	newHyruleCastle := obj.(*hyrule.HyruleCastle)
-	oldHyruleCastle := old.(*hyrule.HyruleCastle)
-	newHyruleCastle.Status = oldHyruleCastle.Status
-
-	// Spec and annotation updates bump the generation.
-	if !reflect.DeepEqual(newHyruleCastle.Spec, oldHyruleCastle.Spec) ||
-		!reflect.DeepEqual(newHyruleCastle.Annotations, oldHyruleCastle.Annotations) {
-		newHyruleCastle.Generation = oldHyruleCastle.Generation + 1
-	}
-}
-
-// Implement Status endpoint
-// StatusREST implements the REST endpoint for changing the status of a deployment
-type HyruleCastleStatusStrategy struct {
-	HyruleCastleStrategy
-}
-
-// singletonHyruleCastleStatusStrategy contains the cross-cutting storage
-var singletonHyruleCastleStatusStrategy = HyruleCastleStatusStrategy{*singletonHyruleCastleStrategy}
-
-//// HyruleCastleStatusREST contains the REST method implementations
-//type HyruleCastleStatusREST struct {
-//	store *genericregistry.Store
-//}
-//
-//func (r HyruleCastleStatusREST) New() runtime.Object {
-//	return &hyrule.HyruleCastle{}
-//}
-//
-//// Get retrieves the object from the storage. It is required to support Patch.
-//func (r HyruleCastleStatusREST) Get(ctx genericapirequest.Context, name string, options *metav1.GetOptions) (runtime.Object, error) {
-//	return r.store.Get(ctx, name, options)
-//}
-//
-//// Update alters the status subset of an object.
-//func (r HyruleCastleStatusREST) Update(ctx genericapirequest.Context, name string, objInfo rest.UpdatedObjectInfo) (runtime.Object, bool, error) {
-//	return r.store.Update(ctx, name, objInfo)
-//}
-
-// PrepareForUpdate clears fields that are not allowed to be set by end users on update of status
-func (HyruleCastleStatusStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
-	newHyruleCastle := obj.(*hyrule.HyruleCastle)
-	oldHyruleCastle := old.(*hyrule.HyruleCastle)
-	newHyruleCastle.Spec = oldHyruleCastle.Spec
-	newHyruleCastle.Labels = oldHyruleCastle.Labels
-}
-
-// Implement Registry
-// storage puts strong typing around storage calls
-type storageHyruleCastle struct {
-	rest.StandardStorage
-}
-
-func (s *storageHyruleCastle) ListHyruleCastles(ctx genericapirequest.Context, options *metainternalversion.ListOptions) (*hyrule.HyruleCastleList, error) {
-	if options != nil && options.FieldSelector != nil && !options.FieldSelector.Empty() {
-		return nil, fmt.Errorf("field selector not supported yet")
-	}
-	obj, err := s.List(ctx, options)
-	if err != nil {
-		return nil, err
-	}
-	return obj.(*hyrule.HyruleCastleList), err
-}
-
-func (s *storageHyruleCastle) GetHyruleCastle(ctx genericapirequest.Context, id string, options *metav1.GetOptions) (*hyrule.HyruleCastle, error) {
-	obj, err := s.Get(ctx, id, options)
-	if err != nil {
-		return nil, err
-	}
-	return obj.(*hyrule.HyruleCastle), nil
-}
-
-func (s *storageHyruleCastle) CreateHyruleCastle(ctx genericapirequest.Context, object *hyrule.HyruleCastle) (*hyrule.HyruleCastle, error) {
-	obj, err := s.Create(ctx, object)
-	if err != nil {
-		return nil, err
-	}
-	return obj.(*hyrule.HyruleCastle), nil
-}
-
-func (s *storageHyruleCastle) UpdateHyruleCastle(ctx genericapirequest.Context, object *hyrule.HyruleCastle) (*hyrule.HyruleCastle, error) {
-	obj, _, err := s.Update(ctx, object.Name, rest.DefaultUpdatedObjectInfo(object, api.Scheme))
-	if err != nil {
-		return nil, err
-	}
-	return obj.(*hyrule.HyruleCastle), nil
-}
-
-func (s *storageHyruleCastle) DeleteHyruleCastle(ctx genericapirequest.Context, id string) error {
-	_, err := s.Delete(ctx, id, nil)
-	return err
-}
 
 // Definition used to register v1HyruleCastle with the apiserver
 var v1HyruleCastleApiDefinition = &defaults.ResourceDefinition{
 	v1.SchemeGroupVersion.WithResource("hyrulecastles"),
-	singletonHyruleCastleStrategy,
-	singletonHyruleCastleStrategy,
-	singletonHyruleCastleStrategy,
-	singletonHyruleCastleStrategy,
+	hyrule.HyruleCastleStrategySingleton,
+	hyrule.HyruleCastleStrategySingleton,
+	hyrule.HyruleCastleStrategySingleton,
+	hyrule.HyruleCastleStrategySingleton,
 	map[string]*defaults.ResourceDefinition{
 		"hyrulecastles/status": v1HyruleCastleStatusApiDefinition,
 	},
-	singletonHyruleCastleStrategy.BasicMatch,
-	func(store *genericregistry.Store) rest.Storage { return &HyruleCastleStore{store} },
+	hyrule.HyruleCastleStrategySingleton.BasicMatch,
+	func(store *genericregistry.Store) rest.Storage { return &hyrule.HyruleCastleStore{store} },
 }
 
 var v1HyruleCastleStatusApiDefinition = &defaults.ResourceDefinition{
 	v1.SchemeGroupVersion.WithResource("hyrulecastles"),
-	singletonHyruleCastleStatusStrategy,
-	singletonHyruleCastleStatusStrategy,
-	singletonHyruleCastleStatusStrategy,
-	singletonHyruleCastleStatusStrategy,
+	hyrule.HyruleCastleStatusStrategySingleton,
+	hyrule.HyruleCastleStatusStrategySingleton,
+	hyrule.HyruleCastleStatusStrategySingleton,
+	hyrule.HyruleCastleStatusStrategySingleton,
 	map[string]*defaults.ResourceDefinition{},
-	singletonHyruleCastleStatusStrategy.BasicMatch,
-	func(store *genericregistry.Store) rest.Storage { return &HyruleCastleStatusStore{store} },
+	hyrule.HyruleCastleStatusStrategySingleton.BasicMatch,
+	func(store *genericregistry.Store) rest.Storage { return &hyrule.HyruleCastleStatusStore{store} },
 }
 
 // Order list of version preferences
