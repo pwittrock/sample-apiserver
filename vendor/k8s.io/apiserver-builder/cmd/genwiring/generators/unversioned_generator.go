@@ -41,8 +41,7 @@ type unversionedGenerator struct {
 	allTypesByKindVersion map[string]map[string]*types.Type
 	versionedApiTypes     []string
 
-	subresourceApiTypes []string
-	subresources        map[string]SubResource
+	subresources map[string]SubResource
 }
 
 var _ generator.Generator = &unversionedGenerator{}
@@ -56,7 +55,7 @@ func CreateUnversionedGenerator(
 
 	//typesByVersionKind, typesByKindVersion, unversionedApiTypes := GetIndexedTypes(context, group)
 
-	versionedApiTypes, unversionedApiTypes, subresourceApiTypes := GetVersionedAndUnversioned(context, group)
+	versionedApiTypes, unversionedApiTypes := GetVersionedAndUnversioned(context, group)
 	typesByVersionKind, typesByKindVersion := IndexByVersionAndKind(
 		context, group, versionedApiTypes, unversionedApiTypes)
 
@@ -79,6 +78,11 @@ func CreateUnversionedGenerator(
 		"reflect",
 		"k8s.io/client-go/pkg/api",
 	)
+	for _, sr := range subresources {
+		if len(sr.Import) > 0 {
+			toImport.Insert(sr.Import)
+		}
+	}
 
 	return &unversionedGenerator{
 		generator.DefaultGen{OptionalName: arguments.OutputFileBaseName},
@@ -90,7 +94,6 @@ func CreateUnversionedGenerator(
 		typesByKindVersion,
 		allTypesByKindVersion,
 		versionedApiTypes.List(),
-		subresourceApiTypes.List(),
 		subresources,
 	}
 }
@@ -114,15 +117,15 @@ func (d *unversionedGenerator) PackageVars(c *generator.Context) []string {
 	vars := []string{}
 	buffer := &bytes.Buffer{}
 
-	types := []string{}
+	knownTypes := []string{}
 	for _, n := range d.versionedApiTypes {
-		types = append(types, fmt.Sprintf("&%s{}", n), fmt.Sprintf("&%sList{}", n))
+		knownTypes = append(knownTypes, fmt.Sprintf("&%s{}", n), fmt.Sprintf("&%sList{}", n))
 	}
 	for _, n := range d.subresources {
-		types = append(types, fmt.Sprintf("&%s{}", n.RequestKind))
+		knownTypes = append(knownTypes, fmt.Sprintf("&%s{}", n.RequestKind))
 	}
 
-	t := strings.Join(types, ", ")
+	t := strings.Join(knownTypes, ", ")
 	sw := generator.NewSnippetWriter(buffer, c, "$", "$")
 	sw.Do(fmt.Sprintf(`registerFn = func(scheme *runtime.Scheme) error {
 		scheme.AddKnownTypes(SchemeGroupVersion, %s)
@@ -194,15 +197,17 @@ func (d *unversionedGenerator) CreateGenerateTypesList() []GenerateTypes {
 	for _, k := range d.versionedApiTypes {
 		types = append(types, d.CreateGenerateTypes(k, true))
 	}
-	for _, k := range d.subresourceApiTypes {
-		types = append(types, d.CreateGenerateTypes(k, false))
+	for _, k := range d.subresources {
+		if len(k.Import) == 0 {
+			types = append(types, d.CreateGenerateTypes(k.RequestKind, false))
+		}
 	}
 	return types
 }
 
 func (d *unversionedGenerator) Finalize(context *generator.Context, w io.Writer) error {
 	for _, sr := range d.subresources {
-		fmt.Printf("Doing Sub %s\n", sr.Path)
+		fmt.Printf("Generating sub resource %s\n", sr.Path)
 		Templates.subresourceTemplate.Execute(w, sr)
 	}
 

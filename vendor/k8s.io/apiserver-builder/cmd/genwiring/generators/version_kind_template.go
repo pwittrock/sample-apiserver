@@ -57,18 +57,7 @@ var {{.Name}}StatusApiDefinition = &defaults.ResourceDefinition{
 	func(store *genericregistry.Store) rest.Storage { return &{{.Group}}.{{.Kind}}StatusStore{store} },
 }
 
-{{range $index, $element := .SubResources -}}
-//var {{$args.Name}}{{$element.REST}}ApiDefinition = &defaults.ResourceDefinition{
-//	{{$args.Version}}.SchemeGroupVersion.WithResource("{{$args.Resource}}"),
-//	{{$args.Group}}.{{$element.REST}}StrategySingleton,
-//	{{$args.Group}}.{{$element.REST}}StrategySingleton,
-//	{{$args.Group}}.{{$element.REST}}StrategySingleton,
-//	{{$args.Group}}.{{$element.REST}}StrategySingleton,
-//	map[string]*defaults.ResourceDefinition{},
-//	{{$args.Group}}.{{$element.REST}}StrategySingleton.BasicMatch,
-//	{{$args.Group}}.{{$element.REST}}StorageFn,
-//}
-
+{{range $index, $element := .SubResources}}
 var {{$args.Name}}{{$element.REST}}ApiDefinition = &defaults.ResourceDefinition{
 	{{$args.Version}}.SchemeGroupVersion.WithResource("{{$args.Resource}}"),
 	{{$args.Group}}.{{$element.REST}}StrategySingleton,
@@ -79,8 +68,6 @@ var {{$args.Name}}{{$element.REST}}ApiDefinition = &defaults.ResourceDefinition{
 	{{$args.Group}}.{{$element.REST}}StrategySingleton.BasicMatch,
 	{{$args.Group}}.{{$element.REST}}StorageFn,
 }
-
-
-{{ end -}}
+{{end}}
 {{ end -}}
 `

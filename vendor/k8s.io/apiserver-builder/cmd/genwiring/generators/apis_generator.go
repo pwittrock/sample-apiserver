@@ -99,6 +99,7 @@ type SubResource struct {
 	RequestKind string
 	Path        string
 	REST        string
+	Import      string
 }
 
 func (d *apisGenerator) Finalize(context *generator.Context, w io.Writer) error {

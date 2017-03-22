@@ -60,13 +60,13 @@ func (DoScalePeachesCastle) New() runtime.Object {
 // +genclient=true
 
 type PeachesCastle struct {
-	metav1.ObjectMeta
-
 	Spec PeachesCastleSpec
 
 	Status PeachesCastleStatus
 
 	metav1.TypeMeta
+
+	metav1.ObjectMeta
 }
 
 type PeachesCastleList struct {
@@ -234,7 +234,7 @@ func (s *storagePeachesCastle) DeletePeachesCastle(ctx genericapirequest.Context
 	return err
 }
 
-// Strategy for peachescastles/scale
+// Strategy for peachescastles/scalecastle
 type DoScalePeachesCastleStrategy struct {
 	// Inherit the basic create, delete, update strategy.
 	PeachesCastleStrategy

@@ -38,7 +38,7 @@ func IsApiType(t *types.Type) bool {
 	return false
 }
 
-func IsSubResource(t *types.Type) bool {
+func HasSubResource(t *types.Type) bool {
 	for _, c := range t.CommentLines {
 		if strings.Contains(c, "+subresource") {
 			return true
@@ -102,6 +102,18 @@ func (c Comments) GetTag(name string) string {
 	return ""
 }
 
+func (c Comments) GetTags(name string) []string {
+	tags := []string{}
+	for _, c := range c {
+		prefix := fmt.Sprintf("+%s=", name)
+		if strings.HasPrefix(c, prefix) {
+			//fmt.Printf("Checking %s has %s %v\n", c, prefix, strings.HasPrefix(c, prefix))
+			tags = append(tags, strings.TrimLeft(c, prefix))
+		}
+	}
+	return tags
+}
+
 func GetApiTypes(c *generator.Context, group string) []*types.Type {
 	types := []*types.Type{}
 	for _, o := range c.Order {
@@ -128,20 +140,37 @@ func GetSubresources(context *generator.Context, group string) map[string]SubRes
 	// Find subresources
 	for _, o := range context.Order {
 		comments := Comments(o.CommentLines)
-		subresource := comments.GetTag("subresource")
-		if len(subresource) == 0 {
+		subresourceList := comments.GetTags("subresource")
+		if len(subresourceList) == 0 {
 			// Not a subresource
 			continue
 		}
-		fmt.Printf("Found Sub %s in group %s %s \n", subresource, GetGroup(o), group)
 		if !IsGroup(o, group) {
 			continue
 		}
-		args := strings.Split(subresource, ",")
+		for _, subresource := range subresourceList {
+			args := strings.Split(subresource, ",")
+			path, kind, requestKind, rest := args[0], args[1], args[2], args[3]
+			imp := ""
+			if strings.Contains(requestKind, ".") {
+				last := strings.LastIndex(requestKind, ".")
+				imp = requestKind[:last]
 
-		// Add to the list of subresource
-		sr := SubResource{args[0], o.Name.Name, args[2], args[1]}
-		subresources[args[0]] = sr
+				// Set the request kind to the struct name
+				requestKind = requestKind[last+1:]
+				// Find the package
+				pkg := filepath.Base(imp)
+				// Prefix the struct name with the package it is in
+				requestKind = strings.Join([]string{pkg, requestKind}, ".")
+			}
+			sr := SubResource{kind, requestKind, path, rest, imp}
+			if v, f := subresources[path]; f {
+				panic(errors.Errorf("Multiple subresources registered for path %s: %v %v",
+					path, v, subresource))
+			}
+			subresources[path] = sr
+		}
+
 	}
 	return subresources
 }
@@ -194,16 +223,13 @@ func GetIndexedTypes(context *generator.Context, group string) (map[string]map[s
 }
 
 func GetVersionedAndUnversioned(context *generator.Context, group string) (
-	sets.String, sets.String, sets.String) {
+	sets.String, sets.String) {
 	versionedApiTypes := sets.NewString()
 	unversionedApiTypes := sets.NewString()
-	subresourceApiTypes := sets.NewString()
 	for _, c := range context.Order {
 		if IsVersioned(c, group) && IsApiType(c) {
 			// Find versioned types that are API types
 			versionedApiTypes.Insert(c.Name.Name)
-		} else if IsVersioned(c, group) && IsSubResource(c) {
-			subresourceApiTypes.Insert(c.Name.Name)
 		}
 	}
 
@@ -214,7 +240,7 @@ func GetVersionedAndUnversioned(context *generator.Context, group string) (
 			unversionedApiTypes.Insert(c.Name.Name)
 		}
 	}
-	return versionedApiTypes, unversionedApiTypes, subresourceApiTypes
+	return versionedApiTypes, unversionedApiTypes
 }
 
 func IndexByVersionAndKind(context *generator.Context, group string, versionedSet, unversionedSet sets.String) (

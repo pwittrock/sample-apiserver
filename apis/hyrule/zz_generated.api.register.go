@@ -55,13 +55,13 @@ const (
 // +genclient=true
 
 type HyruleCastle struct {
-	metav1.TypeMeta
-
-	metav1.ObjectMeta
-
 	Spec HyruleCastleSpec
 
 	Status HyruleCastleStatus
+
+	metav1.TypeMeta
+
+	metav1.ObjectMeta
 }
 
 type HyruleCastleList struct {

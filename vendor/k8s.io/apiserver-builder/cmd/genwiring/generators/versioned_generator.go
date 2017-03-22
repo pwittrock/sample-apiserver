@@ -22,6 +22,7 @@ import (
 	"io"
 	"strings"
 
+	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/gengo/args"
 	"k8s.io/gengo/generator"
 	"k8s.io/gengo/namer"
@@ -36,6 +37,7 @@ type versionedGenerator struct {
 	domain           string
 	apiTypeNames     []string
 	subresourceNames []string
+	imports          []string
 }
 
 var _ generator.Generator = &versionedGenerator{}
@@ -49,6 +51,17 @@ func CreateVersionedGenerator(
 		subresourceNames = append(subresourceNames, sr.RequestKind)
 	}
 
+	imports := sets.NewString(
+		"metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"",
+		"k8s.io/apimachinery/pkg/runtime",
+		"k8s.io/apimachinery/pkg/runtime/schema")
+
+	for _, sr := range subresources {
+		if len(sr.Import) > 0 {
+			imports.Insert(sr.Import)
+		}
+	}
+
 	return &versionedGenerator{
 		generator.DefaultGen{OptionalName: arguments.OutputFileBaseName},
 		pkg,
@@ -57,6 +70,7 @@ func CreateVersionedGenerator(
 		domain,
 		GetApiTypeNames(c, group),
 		subresourceNames,
+		imports.List(),
 	}
 }
 
@@ -67,10 +81,7 @@ func (d *versionedGenerator) Namers(c *generator.Context) namer.NameSystems {
 	return nil
 }
 func (d *versionedGenerator) Imports(c *generator.Context) []string {
-	return []string{
-		"metav1 \"k8s.io/apimachinery/pkg/apis/meta/v1\"",
-		"k8s.io/apimachinery/pkg/runtime",
-		"k8s.io/apimachinery/pkg/runtime/schema"}
+	return d.imports
 }
 
 func (d *versionedGenerator) PackageVars(c *generator.Context) []string {

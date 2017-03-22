@@ -33,6 +33,7 @@ import (
 var AllowErrors = flag.Bool("allow-errors", false, "If true, don't fail on errors.")
 var GenOpenApiDir = flag.String("gen-open-api-dir", "gen_open_api/", "Directory containing open api files")
 var ConfigDir = flag.String("config-dir", "", "Directory contain api files.")
+var UseTags = flag.Bool("use-tags", false, "If true, use the openapi tags instead of the config yaml.")
 
 func NewConfig() *Config {
 	config := loadYamlConfig()
@@ -131,15 +132,18 @@ func loadYamlConfig() *Config {
 
 	config := &Config{}
 	contents, err := ioutil.ReadFile(f)
-	if err != nil {
-		fmt.Printf("Failed to read yaml file %s: %v", f, err)
-		os.Exit(2)
-	}
 
-	err = yaml.Unmarshal(contents, config)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		if !*UseTags {
+			fmt.Printf("Failed to read yaml file %s: %v", f, err)
+			os.Exit(2)
+		}
+	} else {
+		err = yaml.Unmarshal(contents, config)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 	}
 
 	writeCategory := OperationCategory{
