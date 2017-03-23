@@ -63,11 +63,11 @@ func Convert_v2_PeachesCastle_To_mushroomkingdom_PeachesCastle(in *PeachesCastle
 }
 
 func autoConvert_mushroomkingdom_PeachesCastle_To_v2_PeachesCastle(in *mushroomkingdom.PeachesCastle, out *PeachesCastle, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
-	if err := Convert_mushroomkingdom_PeachesCastleSpec_To_v2_PeachesCastleSpec(&in.Spec, &out.Spec, s); err != nil {
+	if err := Convert_mushroomkingdom_PeachesCastleStatus_To_v2_PeachesCastleStatus(&in.Status, &out.Status, s); err != nil {
 		return err
 	}
-	if err := Convert_mushroomkingdom_PeachesCastleStatus_To_v2_PeachesCastleStatus(&in.Status, &out.Status, s); err != nil {
+	out.ObjectMeta = in.ObjectMeta
+	if err := Convert_mushroomkingdom_PeachesCastleSpec_To_v2_PeachesCastleSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
 	}
 	return nil

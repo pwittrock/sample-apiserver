@@ -24,7 +24,6 @@ import (
 	hyrule "github.com/pwittrock/apiserver-helloworld/apis/hyrule"
 	conversion "k8s.io/apimachinery/pkg/conversion"
 	runtime "k8s.io/apimachinery/pkg/runtime"
-	unsafe "unsafe"
 )
 
 func init() {
@@ -62,13 +61,13 @@ func Convert_v1_HyruleCastle_To_hyrule_HyruleCastle(in *HyruleCastle, out *hyrul
 }
 
 func autoConvert_hyrule_HyruleCastle_To_v1_HyruleCastle(in *hyrule.HyruleCastle, out *HyruleCastle, s conversion.Scope) error {
-	out.ObjectMeta = in.ObjectMeta
 	if err := Convert_hyrule_HyruleCastleSpec_To_v1_HyruleCastleSpec(&in.Spec, &out.Spec, s); err != nil {
 		return err
 	}
 	if err := Convert_hyrule_HyruleCastleStatus_To_v1_HyruleCastleStatus(&in.Status, &out.Status, s); err != nil {
 		return err
 	}
+	out.ObjectMeta = in.ObjectMeta
 	return nil
 }
 
@@ -78,7 +77,17 @@ func Convert_hyrule_HyruleCastle_To_v1_HyruleCastle(in *hyrule.HyruleCastle, out
 
 func autoConvert_v1_HyruleCastleList_To_hyrule_HyruleCastleList(in *HyruleCastleList, out *hyrule.HyruleCastleList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	out.Items = *(*[]hyrule.HyruleCastle)(unsafe.Pointer(&in.Items))
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]hyrule.HyruleCastle, len(*in))
+		for i := range *in {
+			if err := Convert_v1_HyruleCastle_To_hyrule_HyruleCastle(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
@@ -88,7 +97,17 @@ func Convert_v1_HyruleCastleList_To_hyrule_HyruleCastleList(in *HyruleCastleList
 
 func autoConvert_hyrule_HyruleCastleList_To_v1_HyruleCastleList(in *hyrule.HyruleCastleList, out *HyruleCastleList, s conversion.Scope) error {
 	out.ListMeta = in.ListMeta
-	out.Items = *(*[]HyruleCastle)(unsafe.Pointer(&in.Items))
+	if in.Items != nil {
+		in, out := &in.Items, &out.Items
+		*out = make([]HyruleCastle, len(*in))
+		for i := range *in {
+			if err := Convert_hyrule_HyruleCastle_To_v1_HyruleCastle(&(*in)[i], &(*out)[i], s); err != nil {
+				return err
+			}
+		}
+	} else {
+		out.Items = nil
+	}
 	return nil
 }
 
