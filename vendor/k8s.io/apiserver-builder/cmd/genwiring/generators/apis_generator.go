@@ -87,6 +87,7 @@ func (d *apisGenerator) Imports(c *generator.Context) []string {
 }
 
 func (d *apisGenerator) PackageVars(c *generator.Context) []string {
+
 	return d.vars
 }
 
@@ -123,6 +124,9 @@ func (d *apisGenerator) Finalize(context *generator.Context, w io.Writer) error 
 			}
 		}
 	}
+
+	// Add the api provider
+	ApiProviders.Insert(strings.Title(d.group))
 
 	// Write the group scoped template
 	args := GroupTemplateArgs{

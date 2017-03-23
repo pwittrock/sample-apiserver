@@ -17,41 +17,31 @@ limitations under the License.
 package generators
 
 import (
-	"github.com/pkg/errors"
-	"html/template"
+	"text/template"
 )
 
 type templates struct {
-	groupTemplate       *template.Template
-	kindTemplate        *template.Template
-	versionKindTemplate *template.Template
-	subresourceTemplate *template.Template
+	groupTemplate        *template.Template
+	kindTemplate         *template.Template
+	versionKindTemplate  *template.Template
+	subresourceTemplate  *template.Template
+	AllProvidersTemplate *template.Template
 }
 
 var Templates = GetTemplates()
 
 func GetTemplates() *templates {
-	groupTemplate, err := template.New(groupTemplateName).Parse(groupTemplateString)
-	if err != nil {
-		panic(errors.Errorf("Could not parse %v %s", err, groupTemplateString))
-	}
-	kindTemplate, err := template.New(kindTemplateName).Parse(kindTemplateString)
-	if err != nil {
-		panic(errors.Errorf("Could not parse %v %s", err, kindTemplateString))
-	}
-	versionKindTemplate, err := template.New(versionKindTemplateName).Parse(versionKindTemplateString)
-	if err != nil {
-		panic(errors.Errorf("Could not parse %v %s", err, versionKindTemplateString))
-	}
-	subresourceTemplate, err := template.New(subresourceTemplateName).Parse(subresourceTemplateString)
-	if err != nil {
-		panic(errors.Errorf("Could not parse %v %s", err, subresourceTemplateString))
-	}
+	groupTemplate := template.Must(template.New(groupTemplateName).Parse(groupTemplateString))
+	kindTemplate := template.Must(template.New(kindTemplateName).Parse(kindTemplateString))
+	versionKindTemplate := template.Must(template.New(versionKindTemplateName).Parse(versionKindTemplateString))
+	subresourceTemplate := template.Must(template.New(subresourceTemplateName).Parse(subresourceTemplateString))
+	allProvidersTemplate := template.Must(template.New(AllProvidersTemplateName).Parse(AllProvidersTemplateString))
 
 	return &templates{
 		groupTemplate,
 		kindTemplate,
 		versionKindTemplate,
 		subresourceTemplate,
+		allProvidersTemplate,
 	}
 }

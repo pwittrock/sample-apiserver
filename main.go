@@ -21,8 +21,8 @@ import (
 	"os"
 	"runtime"
 
-	"github.com/pwittrock/apiserver-helloworld/apis"
-	"github.com/pwittrock/apiserver-helloworld/pkg/openapi"
+	"./pkg/openapi"
+
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver-builder/pkg/cmd/server"
 	"k8s.io/apiserver-builder/pkg/defaults"
@@ -39,10 +39,11 @@ func main() {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
 
+	// Register the openapi
 	server.GetOpenApiDefinition = openapi.GetOpenAPIDefinitions
 
-	providers := []defaults.ResourceDefinitionProvider{apis.GetHyruleProvider(), apis.GetMushroomkingdomProvider()}
-	cmd := server.NewCommandStartWardleServer(os.Stdout, os.Stderr, providers, wait.NeverStop)
+	// To disable providers, manually specify the list provided by getKnownProviders()
+	cmd := server.NewCommandStartWardleServer(os.Stdout, os.Stderr, []defaults.ResourceDefinitionProvider{}, wait.NeverStop)
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 	if err := cmd.Execute(); err != nil {
 		panic(err)

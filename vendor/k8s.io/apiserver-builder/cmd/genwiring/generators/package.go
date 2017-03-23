@@ -58,9 +58,10 @@ func (g *Gen) NameSystems() namer.NameSystems {
 	}
 }
 
-func (g *Gen) ParsePackages(context *generator.Context, arguments *args.GeneratorArgs) (sets.String, sets.String, string) {
+func (g *Gen) ParsePackages(context *generator.Context, arguments *args.GeneratorArgs) (sets.String, sets.String, string, string) {
 	versionedPkgs := sets.NewString()
 	unversionedPkgs := sets.NewString()
+	mainPkg := ""
 	apisPkg := ""
 	for _, o := range context.Order {
 		if IsApiType(o) {
@@ -74,17 +75,18 @@ func (g *Gen) ParsePackages(context *generator.Context, arguments *args.Generato
 					"Found multiple apis directory paths: %v and %v", apisPkg, apis))
 			} else {
 				apisPkg = apis
+				mainPkg = filepath.Dir(apisPkg)
 			}
 		}
 	}
-	return versionedPkgs, unversionedPkgs, apisPkg
+	return versionedPkgs, unversionedPkgs, apisPkg, mainPkg
 }
 
 func (g *Gen) Packages(context *generator.Context, arguments *args.GeneratorArgs) generator.Packages {
 	g.p = generator.Packages{}
 
 	// Do the versioned packages
-	versionedPkgs, unversionedPkgs, apisPkg := g.ParsePackages(context, arguments)
+	versionedPkgs, unversionedPkgs, apisPkg, _ := g.ParsePackages(context, arguments)
 	pkg := context.Universe[apisPkg]
 	if pkg == nil {
 		// If the input had no Go files, for example.
@@ -127,12 +129,14 @@ func (g *Gen) Packages(context *generator.Context, arguments *args.GeneratorArgs
 
 	// Do the base Api package
 	pkg = context.Universe[apisPkg]
+	factory := &packageFactory{pkg, arguments}
 	if pkg != nil {
 		for _, group := range groups {
-			factory := &packageFactory{pkg, arguments}
 			g.p = append(g.p, factory.createPackage(CreateApisGenerator(
 				context, pkg, group, domain)))
 		}
+		// Run this after the individual packages so the list of providers is populated
+		g.p = append(g.p, factory.createPackage(CreateAllProvidersGenerator(context, pkg)))
 	}
 
 	return g.p
