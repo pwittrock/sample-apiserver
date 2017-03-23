@@ -21,11 +21,11 @@ import (
 	"os"
 	"runtime"
 
+	"./apis"
 	"./pkg/openapi"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver-builder/pkg/cmd/server"
-	"k8s.io/apiserver-builder/pkg/defaults"
 	"k8s.io/apiserver/pkg/util/logs"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
@@ -43,7 +43,7 @@ func main() {
 	server.GetOpenApiDefinition = openapi.GetOpenAPIDefinitions
 
 	// To disable providers, manually specify the list provided by getKnownProviders()
-	cmd := server.NewCommandStartWardleServer(os.Stdout, os.Stderr, []defaults.ResourceDefinitionProvider{}, wait.NeverStop)
+	cmd := server.NewCommandStartWardleServer(os.Stdout, os.Stderr, apis.GetAllProviders(), wait.NeverStop)
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 	if err := cmd.Execute(); err != nil {
 		panic(err)
