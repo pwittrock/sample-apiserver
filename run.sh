@@ -41,8 +41,5 @@ echo "Generating deepcopy"
 /usr/local/go/bin/go run $GO2IDL/deepcopy-gen/main.go -i "$REPO/apis/..." -o $ROOT/src/ -O zz_generated.deepcopy --go-header-file $GENGO/boilerplate.go.txt
 fi
 
-DO_OPENAPI=${DO_OPENAPI:-true}
-if [ "$DO_OPENAPI" = true ]; then
 echo "Generating openapi"
 /usr/local/go/bin/go run $GO2IDL/openapi-gen/main.go  -i $input -o $ROOT/src --output-package $REPO/pkg/openapi --go-header-file $GENGO/boilerplate.go.txt
-fi

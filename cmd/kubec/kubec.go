@@ -229,6 +229,7 @@ func RunGenDocsCmd(cmd *cobra.Command, args []string) {
 	a := []string{"run", refDocsCmd,
 		"--doc-type", "open-api",
 		"--allow-errors",
+		"--use-tags",
 		"--gen-open-api-dir", templateDir,
 		"--config-dir", configDir,
 	}
