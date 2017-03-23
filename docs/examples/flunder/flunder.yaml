@@ -1,5 +1,0 @@
-sample: |
-  apiVersion: wardle.k8s.io/v1alpha1
-  kind: Flunder
-  metadata:
-    name: flunder-example

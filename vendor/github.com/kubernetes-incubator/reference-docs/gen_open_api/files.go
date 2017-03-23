@@ -27,6 +27,7 @@ import (
 
 	"github.com/kubernetes-incubator/reference-docs/gen_open_api/api"
 	"github.com/kubernetes-incubator/reference-docs/lib"
+	"github.com/pkg/errors"
 )
 
 func WriteTemplates(config *api.Config) {
@@ -52,12 +53,54 @@ func getStaticIncludesDir() string {
 	return filepath.Join(*api.ConfigDir, "static_includes")
 }
 
+func WriteStaticFile(title, location string) {
+	staticFileTemplate, err := template.New("static-file-template").Parse(DefaultHeader)
+	if err != nil {
+		panic(errors.Errorf("Could not parse %v %s", err, DefaultHeader))
+	}
+
+	f := filepath.Join(getStaticIncludesDir(), location)
+	_, err = os.Stat(f)
+	if err == nil {
+		// Don't create the file if it exists
+		return
+	}
+
+	if !os.IsNotExist(err) {
+		panic(fmt.Sprintf("Could not stat file %s %v", f, err))
+	}
+	fmt.Printf("Creating %s file\n", f)
+	file, err := os.Create(f)
+	if err != nil {
+		panic(err)
+	}
+	file.Close()
+
+	file, err = os.OpenFile(f, os.O_WRONLY, 0)
+	if err != nil {
+		fmt.Println(err)
+	}
+	err = staticFileTemplate.Execute(file, title)
+	if err != nil {
+		fmt.Println(err)
+	}
+	file.Close()
+}
+
 func WriteIndexFile(config *api.Config) {
 	includes := []string{}
 
 	manifest := Manifest{}
 
 	manifest.Copyright = "<a href=\"https://github.com/kubernetes/kubernetes\">Copyright 2016 The Kubernetes Authors.</a>"
+
+	WriteStaticFile("Overview", "_overview.md")
+	WriteStaticFile("Definitions", "_oldversions.md")
+	WriteStaticFile("Definitions", "_definitions.md")
+	for _, c := range config.ResourceCategories {
+		name := "_" + c.Include + ".md"
+		WriteStaticFile(c.Include, name)
+	}
 
 	if !*api.BuildOps {
 		manifest.Title = "Kubernetes Resource Reference Docs"
@@ -82,7 +125,10 @@ func WriteIndexFile(config *api.Config) {
 	// Add Toc Imports
 	for _, c := range config.ResourceCategories {
 		includes = append(includes, c.Include)
-		manifest.Docs = append(manifest.Docs, Doc{"_" + c.Include + ".md"})
+		name := "_" + c.Include + ".md"
+		manifest.Docs = append(manifest.Docs, Doc{name})
+		WriteStaticFile(c.Include, name)
+
 		for _, r := range c.Resources {
 			if r.Definition == nil {
 				fmt.Printf("Warning: Missing definition for item in ToC %s\n", r.Name)
@@ -123,6 +169,7 @@ func WriteIndexFile(config *api.Config) {
 	}
 	sort.Sort(definitions)
 	manifest.Docs = append(manifest.Docs, Doc{"_oldversions.md"})
+
 	includes = append(includes, "oldversions")
 	for _, d := range definitions {
 		// Skip Inlined definitions
@@ -150,6 +197,13 @@ func WriteIndexFile(config *api.Config) {
 		}
 	}
 }
+
+const DefaultHeader = `
+# <strong>{{.}}</strong>
+
+------------
+
+`
 
 func WriteConceptFiles(config *api.Config) {
 	// Setup the template to be instantiated

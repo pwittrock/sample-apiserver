@@ -39,6 +39,42 @@ func NewConfig() *Config {
 	config := loadYamlConfig()
 	specs := LoadOpenApiSpec()
 
+	if *UseTags {
+		config.ExampleLocation = "examples"
+		// Build the apis from the groups that are observed
+		groupsMap := map[ApiGroup][]*Definition{}
+		VisitDefinitions(specs, func(definition *Definition) {
+			if strings.HasSuffix(definition.Name, "List") {
+				return
+			}
+			if strings.HasSuffix(definition.Name, "Status") {
+				return
+			}
+			g := definition.Group
+			groupsMap[g] = append(groupsMap[g], definition)
+		})
+		groupsList := ApiGroups{}
+		for g := range groupsMap {
+			groupsList = append(groupsList, g)
+		}
+		sort.Sort(groupsList)
+		for _, g := range groupsList {
+			groupName := strings.Title(string(g))
+			config.ApiGroups = append(config.ApiGroups, ApiGroup(groupName))
+			rc := ResourceCategory{}
+			rc.Include = string(g)
+			rc.Name = groupName
+			for _, d := range groupsMap[g] {
+				r := &Resource{}
+				r.Name = d.Name
+				r.Group = string(d.Group)
+				r.Version = string(d.Version)
+				rc.Resources = append(rc.Resources, r)
+			}
+			config.ResourceCategories = append(config.ResourceCategories, rc)
+		}
+	}
+
 	// Initialize all of the operations
 	config.Definitions = GetDefinitions(specs)
 
@@ -53,6 +89,24 @@ func NewConfig() *Config {
 	// Get the map of operations appearing in the open-api spec keyed by id
 	config.InitOperations(specs)
 	config.CleanUp()
+
+	// Prune anything without operations
+	categories := []ResourceCategory{}
+	for _, c := range config.ResourceCategories {
+		resources := Resources{}
+		for _, r := range c.Resources {
+			if d, f := config.Definitions.GetByVersionKind(r.Group, r.Version, r.Name); f {
+				if len(d.OperationCategories) > 1 {
+					resources = append(resources, r)
+				}
+			}
+		}
+		c.Resources = resources
+		if len(resources) > 0 {
+			categories = append(categories, c)
+		}
+	}
+	config.ResourceCategories = categories
 
 	return config
 }
@@ -76,7 +130,8 @@ func verifyBlacklisted(operation Operation) {
 	case strings.Contains(operation.ID, "getCodeVersion"):
 	case strings.Contains(operation.ID, "V1beta1CertificateSigningRequestApproval"):
 	default:
-		panic(fmt.Sprintf("No Definition found for %s [%s].  \n", operation.ID, operation.Path))
+		//panic(fmt.Sprintf("No Definition found for %s [%s].  \n", operation.ID, operation.Path))
+		fmt.Printf("No Definition found for %s [%s].  \n", operation.ID, operation.Path)
 	}
 }
 
