@@ -53,30 +53,35 @@ func main() {
 		runtime.GOMAXPROCS(runtime.NumCPU())
 	}
 
-	cmd.AddCommand(initCmd, addTypesCmd, genCmd, genDocs)
 	cmd.Flags().StringVar(&repoPath, "repo-path", "/out", "path to repo")
 	cmd.Flags().StringVar(&copyFrom, "from-path", "/go/src/github.com/pwittrock/apiserver-helloworld/", "path to repo to copy from")
+	cmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
+	cmd.AddCommand(initCmd, addTypesCmd, genCmd, genDocs)
 
-	initCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 	initCmd.Flags().StringVar(&domain, "domain", "k8s.io", "domain group lives in")
+	initCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 
-	addTypesCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 	addTypesCmd.Flags().StringSliceVar(&types, "types", []string{}, "list of group/version/kind")
 	addTypesCmd.Flags().StringVar(&domain, "domain", "k8s.io", "domain group lives in")
+	addTypesCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 
-	genCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 	genCmd.Flags().BoolVar(&skipRegister, "skip-register", false, "")
 	genCmd.Flags().BoolVar(&skipDeepCopy, "skip-deepcopy", false, "")
 	genCmd.Flags().BoolVar(&skipConversion, "skip-conversion", false, "")
 	genCmd.Flags().BoolVar(&skipOpenApi, "skip-openapi", false, "")
+	genCmd.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 
-	genDocs.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 	genDocs.Flags().BoolVar(&skipOpenApi, "skip-openapi", false, "If true, don't generate swagger.json")
+	genDocs.Flags().StringVar(&repoName, "repo-name", "", "full name of repo")
 
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
 	}
+}
+
+func GetRepoName() {
+	return
 }
 
 func RunMain(cmd *cobra.Command, args []string) {
@@ -320,11 +325,28 @@ var initCmd = &cobra.Command{
 
 func RunInit(cmd *cobra.Command, args []string) {
 	repoPath = filepath.Join(repoPath, "src", repoName)
-	out, _ := exec.Command("cp", "-r", filepath.Join(copyFrom, "vendor"), repoPath).CombinedOutput()
+	out, err := exec.Command("cp", "-r", filepath.Join(copyFrom, "vendor"), repoPath).CombinedOutput()
 	fmt.Printf("%s", out)
-	out, _ = exec.Command("cp", "-r", filepath.Join(copyFrom, "Godeps"), repoPath).CombinedOutput()
+	for i := 0; i < 3 && err != nil; i++ {
+		out, err = exec.Command("cp", "-r", filepath.Join(copyFrom, "vendor"), repoPath).CombinedOutput()
+	}
+	out, err = exec.Command("cp", "-r", filepath.Join(copyFrom, "Godeps"), repoPath).CombinedOutput()
 	fmt.Printf("%s", out)
-	out, _ = exec.Command("cp", "-r", filepath.Join(copyFrom, "main.go"), repoPath).CombinedOutput()
+	for i := 0; i < 3 && err != nil; i++ {
+		out, err = exec.Command("cp", "-r", filepath.Join(copyFrom, "Godeps"), repoPath).CombinedOutput()
+	}
+	mainIn := filepath.Join(repoPath, "main.go")
+	out, err = exec.Command("cp", "-r", filepath.Join(copyFrom, "main.go"), mainIn).CombinedOutput()
+	for i := 0; i < 3 && err != nil; i++ {
+		out, err = exec.Command("cp", "-r", filepath.Join(copyFrom, "Godeps"), repoPath).CombinedOutput()
+	}
+	fmt.Printf("%s", out)
+	out, _ = exec.Command("sed",
+		"-i''", // Empty suffix
+		fmt.Sprintf("s$REPLACE_PKG_TOKEN$%s$g", repoName),
+		mainIn,
+	).CombinedOutput()
+
 	fmt.Printf("%s", out)
 	out, _ = exec.Command("mkdir", "-p", filepath.Join(repoPath, "apis")).CombinedOutput()
 	fmt.Printf("%s", out)

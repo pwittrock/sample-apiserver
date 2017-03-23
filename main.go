@@ -21,8 +21,8 @@ import (
 	"os"
 	"runtime"
 
-	"./apis"
-	"./pkg/openapi"
+	"REPLACE_PKG_TOKEN/apis"
+	"REPLACE_PKG_TOKEN/pkg/openapi"
 
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver-builder/pkg/cmd/server"
