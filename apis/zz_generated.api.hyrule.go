@@ -45,8 +45,7 @@ var v1HyruleCastleApiDefinition = &defaults.ResourceDefinition{
 var v1HyruleCastleStatusApiDefinition = &defaults.ResourceDefinition{
 	v1.SchemeGroupVersion.WithResource("hyrulecastles"),
 	hyrule.HyruleCastleStatusStrategySingleton,
-	hyrule.HyruleCastleStatusStrategySingleton,
-	hyrule.HyruleCastleStatusStrategySingleton,
+	nil, nil,
 	hyrule.HyruleCastleStatusStrategySingleton,
 	map[string]*defaults.ResourceDefinition{},
 	hyrule.HyruleCastleStatusStrategySingleton.BasicMatch,

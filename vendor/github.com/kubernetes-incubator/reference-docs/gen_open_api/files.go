@@ -95,7 +95,7 @@ func WriteIndexFile(config *api.Config) {
 	manifest.Copyright = "<a href=\"https://github.com/kubernetes/kubernetes\">Copyright 2016 The Kubernetes Authors.</a>"
 
 	WriteStaticFile("Overview", "_overview.md")
-	WriteStaticFile("Definitions", "_oldversions.md")
+	WriteStaticFile("Old Versions", "_oldversions.md")
 	WriteStaticFile("Definitions", "_definitions.md")
 	for _, c := range config.ResourceCategories {
 		name := "_" + c.Include + ".md"

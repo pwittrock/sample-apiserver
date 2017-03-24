@@ -21,9 +21,8 @@ import (
 	"os"
 	"runtime"
 
-	"REPLACE_PKG_TOKEN/apis"
-	"REPLACE_PKG_TOKEN/pkg/openapi"
-
+	"github.com/pwittrock/apiserver-helloworld/apis"
+	"github.com/pwittrock/apiserver-helloworld/pkg/openapi"
 	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver-builder/pkg/cmd/server"
 	"k8s.io/apiserver/pkg/util/logs"

@@ -343,7 +343,7 @@ func RunInit(cmd *cobra.Command, args []string) {
 	fmt.Printf("%s", out)
 	out, _ = exec.Command("sed",
 		"-i''", // Empty suffix
-		fmt.Sprintf("s$REPLACE_PKG_TOKEN$%s$g", repoName),
+		fmt.Sprintf("s$github.com/pwittrock/apiserver-helloworld$%s$g", repoName),
 		mainIn,
 	).CombinedOutput()
 

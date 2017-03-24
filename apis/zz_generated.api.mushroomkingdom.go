@@ -46,8 +46,7 @@ var v2PeachesCastleApiDefinition = &defaults.ResourceDefinition{
 var v2PeachesCastleStatusApiDefinition = &defaults.ResourceDefinition{
 	v2.SchemeGroupVersion.WithResource("peachescastles"),
 	mushroomkingdom.PeachesCastleStatusStrategySingleton,
-	mushroomkingdom.PeachesCastleStatusStrategySingleton,
-	mushroomkingdom.PeachesCastleStatusStrategySingleton,
+	nil, nil,
 	mushroomkingdom.PeachesCastleStatusStrategySingleton,
 	map[string]*defaults.ResourceDefinition{},
 	mushroomkingdom.PeachesCastleStatusStrategySingleton.BasicMatch,

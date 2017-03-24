@@ -49,8 +49,7 @@ var {{.Name}}ApiDefinition = &defaults.ResourceDefinition{
 var {{.Name}}StatusApiDefinition = &defaults.ResourceDefinition{
 	{{.Version}}.SchemeGroupVersion.WithResource("{{.Resource}}"),
 	{{.Group}}.{{.Kind}}StatusStrategySingleton,
-	{{.Group}}.{{.Kind}}StatusStrategySingleton,
-	{{.Group}}.{{.Kind}}StatusStrategySingleton,
+	nil, nil,
 	{{.Group}}.{{.Kind}}StatusStrategySingleton,
 	map[string]*defaults.ResourceDefinition{},
 	{{.Group}}.{{.Kind}}StatusStrategySingleton.BasicMatch,

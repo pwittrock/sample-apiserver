@@ -28,6 +28,7 @@ import (
 	"unicode"
 
 	"github.com/go-openapi/loads"
+	"regexp"
 )
 
 var AllowErrors = flag.Bool("allow-errors", false, "If true, don't fail on errors.")
@@ -35,10 +36,7 @@ var GenOpenApiDir = flag.String("gen-open-api-dir", "gen_open_api/", "Directory 
 var ConfigDir = flag.String("config-dir", "", "Directory contain api files.")
 var UseTags = flag.Bool("use-tags", false, "If true, use the openapi tags instead of the config yaml.")
 
-func NewConfig() *Config {
-	config := loadYamlConfig()
-	specs := LoadOpenApiSpec()
-
+func (config *Config) genConfigFromTags(specs []*loads.Document) {
 	if *UseTags {
 		config.ExampleLocation = "examples"
 		// Build the apis from the groups that are observed
@@ -73,6 +71,15 @@ func NewConfig() *Config {
 			}
 			config.ResourceCategories = append(config.ResourceCategories, rc)
 		}
+	}
+}
+
+func NewConfig() *Config {
+	config := loadYamlConfig()
+	specs := LoadOpenApiSpec()
+
+	if *UseTags {
+		config.genConfigFromTags(specs)
 	}
 
 	// Initialize all of the operations
@@ -135,6 +142,107 @@ func verifyBlacklisted(operation Operation) {
 	}
 }
 
+// /apis/<group>/<version>/namespaces/{namespace}/<resources>/{name}/<subresource>
+var matchNamespaced = regexp.MustCompile(
+	`^/apis/([A-Za-z0-9\.]+)/([A-Za-z0-9]+)/namespaces/\{namespace\}/([A-Za-z0-9\.]+)/\{name\}/([A-Za-z0-9\.]+)$`)
+var matchUnnamespaced = regexp.MustCompile(
+	`^/apis/([A-Za-z0-9\.]+)/([A-Za-z0-9]+)/([A-Za-z0-9\.]+)/\{name\}/([A-Za-z0-9\.]+)$`)
+
+func GetMethod(o *Operation) string {
+	switch o.HttpMethod {
+	case "GET":
+		return "List"
+	case "POST":
+		return "Create"
+	case "PATCH":
+		return "Patch"
+	case "DELETE":
+		return "Delete"
+	case "PUT":
+		return "Update"
+	}
+	return ""
+}
+
+func GetGroupVersionKindSub(o *Operation) (string, string, string, string) {
+	if matchNamespaced.MatchString(o.Path) {
+		m := matchNamespaced.FindStringSubmatch(o.Path)
+		//fmt.Printf("Match %s\n", o.Path)
+		group := m[1]
+		group = strings.Split(group, ".")[0]
+		version := m[2]
+		resource := m[3]
+		subresource := m[4]
+		return group, version, resource, subresource
+
+	} else if matchUnnamespaced.MatchString(o.Path) {
+		m := matchUnnamespaced.FindStringSubmatch(o.Path)
+		//fmt.Printf("Match %s\n", o.Path)
+		group := m[1]
+		version := m[2]
+		resource := m[3]
+		subresource := m[4]
+		return group, version, resource, subresource
+	}
+	//fmt.Printf("No Match %s\n", o.Path)
+	return "", "", "", ""
+}
+
+func (config *Config) initOperationsFromTags(specs []*loads.Document) {
+	if *UseTags {
+		ops := map[string]map[string][]*Operation{}
+		defs := map[string]*Definition{}
+		for _, c := range config.Definitions.ByGroupVersionKind {
+			defs[fmt.Sprintf("%s.%s.%s", c.Group, c.Version, strings.ToLower(c.Name)+"s")] = c
+		}
+
+		VisitOperations(specs, func(operation Operation) {
+			if o, found := config.Operations[operation.ID]; found && o.Definition != nil {
+				return
+			}
+			op := operation
+			o := &op
+			config.Operations[operation.ID] = o
+			group, version, resource, sub := GetGroupVersionKindSub(o)
+			if sub == "status" {
+				return
+			}
+			if len(group) == 0 {
+				return
+			}
+			key := fmt.Sprintf("%s.%s.%s", group, version, resource)
+			o.Definition = defs[key]
+
+			// Index by group and subresource
+			if _, f := ops[key]; !f {
+				ops[key] = map[string][]*Operation{}
+			}
+			ops[key][sub] = append(ops[key][sub], o)
+		})
+
+		for key, subMap := range ops {
+			def := defs[key]
+			subs := []string{}
+			for s := range subMap {
+				subs = append(subs, s)
+			}
+			sort.Strings(subs)
+			for _, s := range subs {
+				cat := &OperationCategory{}
+				cat.Name = strings.Title(s) + " Operations"
+				oplist := subMap[s]
+				for _, op := range oplist {
+					ot := OperationType{}
+					ot.Name = GetMethod(op) + " " + strings.Title(s)
+					op.Type = ot
+					cat.Operations = append(cat.Operations, op)
+				}
+				def.OperationCategories = append(def.OperationCategories, cat)
+			}
+		}
+	}
+}
+
 // GetOperations returns all Operations found in the Documents
 func (config *Config) InitOperations(specs []*loads.Document) {
 	o := Operations{}
@@ -145,6 +253,8 @@ func (config *Config) InitOperations(specs []*loads.Document) {
 	config.Operations = o
 
 	config.mapOperationsToDefinitions()
+	config.initOperationsFromTags(specs)
+
 	VisitOperations(specs, func(operation Operation) {
 		if o, found := config.Operations[operation.ID]; !found || o.Definition == nil {
 			verifyBlacklisted(operation)
