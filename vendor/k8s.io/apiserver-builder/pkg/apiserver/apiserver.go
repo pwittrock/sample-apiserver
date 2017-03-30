@@ -65,8 +65,8 @@ type Config struct {
 	GenericConfig *genericapiserver.Config
 }
 
-// WardleServer contains state for a Kubernetes cluster master/api server.
-type WardleServer struct {
+// Server contains state for a Kubernetes cluster master/api server.
+type Server struct {
 	GenericAPIServer *genericapiserver.GenericAPIServer
 }
 
@@ -96,14 +96,14 @@ func (c *Config) SkipComplete() completedConfig {
 	return completedConfig{c}
 }
 
-// New returns a new instance of WardleServer from the given config.
-func (c completedConfig) New() (*WardleServer, error) {
+// New returns a new instance of Server from the given config.
+func (c completedConfig) New() (*Server, error) {
 	genericServer, err := c.Config.GenericConfig.SkipComplete().New() // completion is done in Complete, no need for a second time
 	if err != nil {
 		return nil, err
 	}
 
-	s := &WardleServer{
+	s := &Server{
 		GenericAPIServer: genericServer,
 	}
 

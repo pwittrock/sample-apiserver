@@ -33,11 +33,11 @@ import (
 	"k8s.io/client-go/pkg/api"
 )
 
-const defaultEtcdPathPrefix = "/registry/wardle.kubernetes.io"
+const defaultEtcdPathPrefix = "/registry/sample.kubernetes.io"
 
 var GetOpenApiDefinition openapi.GetOpenAPIDefinitions
 
-type WardleServerOptions struct {
+type ServerOptions struct {
 	RecommendedOptions *genericoptions.RecommendedOptions
 
 	StdOut       io.Writer
@@ -45,13 +45,13 @@ type WardleServerOptions struct {
 	APIProviders []defaults.ResourceDefinitionProvider
 }
 
-func NewWardleServerOptions(out, errOut io.Writer, providers []defaults.ResourceDefinitionProvider) *WardleServerOptions {
+func NewServerOptions(out, errOut io.Writer, providers []defaults.ResourceDefinitionProvider) *ServerOptions {
 	versions := []schema.GroupVersion{}
 	for _, p := range providers {
 		versions = append(versions, p.GetLegacyCodec()...)
 	}
 
-	o := &WardleServerOptions{
+	o := &ServerOptions{
 		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, api.Scheme, api.Codecs.LegacyCodec(versions...)),
 
 		StdOut:       out,
@@ -66,12 +66,12 @@ func NewWardleServerOptions(out, errOut io.Writer, providers []defaults.Resource
 var printBearerToken = false
 
 // NewCommandStartMaster provides a CLI handler for 'start master' command
-func NewCommandStartWardleServer(out, errOut io.Writer, providers []defaults.ResourceDefinitionProvider, stopCh <-chan struct{}) *cobra.Command {
-	o := NewWardleServerOptions(out, errOut, providers)
+func NewCommandStartServer(out, errOut io.Writer, providers []defaults.ResourceDefinitionProvider, stopCh <-chan struct{}) *cobra.Command {
+	o := NewServerOptions(out, errOut, providers)
 
 	cmd := &cobra.Command{
-		Short: "Launch a wardle API server",
-		Long:  "Launch a wardle API server",
+		Short: "Launch an API server",
+		Long:  "Launch an API server",
 		RunE: func(c *cobra.Command, args []string) error {
 			if err := o.Complete(); err != nil {
 				return err
@@ -79,7 +79,7 @@ func NewCommandStartWardleServer(out, errOut io.Writer, providers []defaults.Res
 			if err := o.Validate(args); err != nil {
 				return err
 			}
-			if err := o.RunWardleServer(stopCh); err != nil {
+			if err := o.RunServer(stopCh); err != nil {
 				return err
 			}
 			return nil
@@ -94,15 +94,15 @@ func NewCommandStartWardleServer(out, errOut io.Writer, providers []defaults.Res
 	return cmd
 }
 
-func (o WardleServerOptions) Validate(args []string) error {
+func (o ServerOptions) Validate(args []string) error {
 	return nil
 }
 
-func (o *WardleServerOptions) Complete() error {
+func (o *ServerOptions) Complete() error {
 	return nil
 }
 
-func (o WardleServerOptions) Config() (*apiserver.Config, error) {
+func (o ServerOptions) Config() (*apiserver.Config, error) {
 	// TODO have a "real" external address
 	if err := o.RecommendedOptions.SecureServing.MaybeDefaultWithSelfSignedCerts("localhost"); err != nil {
 		return nil, fmt.Errorf("error creating self-signed certificates: %v", err)
@@ -119,7 +119,7 @@ func (o WardleServerOptions) Config() (*apiserver.Config, error) {
 	return config, nil
 }
 
-func (o WardleServerOptions) SetAuthOptions() error {
+func (o ServerOptions) SetAuthOptions() error {
 	return nil
 	//config, err := o.Config()
 	//if err != nil {
@@ -138,7 +138,7 @@ func (o WardleServerOptions) SetAuthOptions() error {
 	//config.GenericConfig.Authenticator
 }
 
-func (o WardleServerOptions) RunWardleServer(stopCh <-chan struct{}) error {
+func (o ServerOptions) RunServer(stopCh <-chan struct{}) error {
 	config, err := o.Config()
 	if err != nil {
 		return err
@@ -147,7 +147,7 @@ func (o WardleServerOptions) RunWardleServer(stopCh <-chan struct{}) error {
 	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(GetOpenApiDefinition, api.Scheme)
 	//config.GenericConfig.OpenAPIConfig.PostProcessSpec = postProcessOpenAPISpecForBackwardCompatibility
 	//config.GenericConfig.OpenAPIConfig.SecurityDefinitions = securityDefinitions
-	config.GenericConfig.OpenAPIConfig.Info.Title = "Wardle"
+	config.GenericConfig.OpenAPIConfig.Info.Title = "Api"
 
 	if printBearerToken {
 		glog.Infof("Serving on loopback...")

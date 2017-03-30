@@ -19,7 +19,6 @@ package defaults
 import (
 	"fmt"
 
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -30,7 +29,22 @@ import (
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 	"k8s.io/client-go/pkg/api"
+	"reflect"
 )
+
+type BasicStatusStrategy struct {
+	BasicCreateDeleteUpdateStrategy
+}
+
+func (BasicStatusStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+	switch n := obj.(type) {
+	default:
+	case BasicResource:
+		o := old.(BasicResource)
+		n.SetSpec(o.GetSpec())
+		n.GetObjectMeta().Labels = o.GetObjectMeta().Labels
+	}
+}
 
 type BasicCreateDeleteUpdateStrategy struct {
 	runtime.ObjectTyper
@@ -40,10 +54,6 @@ type BasicCreateDeleteUpdateStrategy struct {
 var _ rest.RESTCreateStrategy = &BasicCreateDeleteUpdateStrategy{}
 var _ rest.RESTDeleteStrategy = &BasicCreateDeleteUpdateStrategy{}
 var _ rest.RESTUpdateStrategy = &BasicCreateDeleteUpdateStrategy{}
-
-type HasObjectMeta interface {
-	GetObjectMeta() *metav1.ObjectMeta
-}
 
 // Create a new Basic
 func NewBasicStrategy() BasicCreateDeleteUpdateStrategy {
@@ -55,14 +65,31 @@ func (BasicCreateDeleteUpdateStrategy) NamespaceScoped() bool {
 }
 
 func (BasicCreateDeleteUpdateStrategy) PrepareForCreate(ctx genericapirequest.Context, obj runtime.Object) {
+	switch t := obj.(type) {
+	default:
+	case BasicResource:
+		t.SetGeneration(1)
+		t.SetStatus(t.NewStatus())
+	}
 }
 
 func (BasicCreateDeleteUpdateStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+	switch n := obj.(type) {
+	default:
+	case BasicResource:
+		o := old.(BasicResource)
+		n.SetStatus(o.GetStatus())
+
+		// Spec and annotation updates bump the generation.
+		if !reflect.DeepEqual(n.GetSpec(), o.GetSpec()) ||
+			!reflect.DeepEqual(n.GetObjectMeta().Annotations, o.GetObjectMeta().Annotations) {
+			n.SetGeneration(o.GetGeneration() + 1)
+		}
+	}
 }
 
 func (BasicCreateDeleteUpdateStrategy) Validate(ctx genericapirequest.Context, obj runtime.Object) field.ErrorList {
 	return field.ErrorList{}
-	// return validation.ValidateFlunder(obj.(*wardle.Flunder))
 }
 
 func (BasicCreateDeleteUpdateStrategy) AllowCreateOnUpdate() bool {
@@ -78,12 +105,12 @@ func (BasicCreateDeleteUpdateStrategy) Canonicalize(obj runtime.Object) {
 
 func (BasicCreateDeleteUpdateStrategy) ValidateUpdate(ctx genericapirequest.Context, obj, old runtime.Object) field.ErrorList {
 	return field.ErrorList{}
-	// return validation.ValidateFlunderUpdate(obj.(*wardle.Flunder), old.(*wardle.Flunder))
 }
 
 func GetAttrs(obj runtime.Object) (labels.Set, fields.Set, error) {
 	switch t := obj.(type) {
 	case HasObjectMeta:
+
 		apiserver := obj.(HasObjectMeta)
 		return labels.Set(apiserver.GetObjectMeta().Labels), GetSelectableFields(apiserver), nil
 	default:

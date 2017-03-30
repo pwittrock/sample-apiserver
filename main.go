@@ -42,7 +42,7 @@ func main() {
 	server.GetOpenApiDefinition = openapi.GetOpenAPIDefinitions
 
 	// To disable providers, manually specify the list provided by getKnownProviders()
-	cmd := server.NewCommandStartWardleServer(os.Stdout, os.Stderr, apis.GetAllProviders(), wait.NeverStop)
+	cmd := server.NewCommandStartServer(os.Stdout, os.Stderr, apis.GetAllProviders(), wait.NeverStop)
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 	if err := cmd.Execute(); err != nil {
 		panic(err)
