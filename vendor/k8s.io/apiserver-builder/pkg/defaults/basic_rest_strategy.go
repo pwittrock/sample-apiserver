@@ -32,20 +32,6 @@ import (
 	"reflect"
 )
 
-type BasicStatusStrategy struct {
-	BasicCreateDeleteUpdateStrategy
-}
-
-func (BasicStatusStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
-	switch n := obj.(type) {
-	default:
-	case BasicResource:
-		o := old.(BasicResource)
-		n.SetSpec(o.GetSpec())
-		n.GetObjectMeta().Labels = o.GetObjectMeta().Labels
-	}
-}
-
 type BasicCreateDeleteUpdateStrategy struct {
 	runtime.ObjectTyper
 	names.NameGenerator
@@ -131,4 +117,18 @@ func (BasicCreateDeleteUpdateStrategy) BasicMatch(label labels.Selector, field f
 // GetSelectableFields returns a field set that represents the object.
 func GetSelectableFields(obj HasObjectMeta) fields.Set {
 	return generic.ObjectMetaFieldsSet(obj.GetObjectMeta(), true)
+}
+
+type BasicStatusStrategy struct {
+	BasicCreateDeleteUpdateStrategy
+}
+
+func (BasicStatusStrategy) PrepareForUpdate(ctx genericapirequest.Context, obj, old runtime.Object) {
+	switch n := obj.(type) {
+	default:
+	case BasicResource:
+		o := old.(BasicResource)
+		n.SetSpec(o.GetSpec())
+		n.GetObjectMeta().Labels = o.GetObjectMeta().Labels
+	}
 }
