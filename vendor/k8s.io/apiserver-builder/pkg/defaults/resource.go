@@ -18,7 +18,6 @@ package defaults
 
 import (
 	"k8s.io/apimachinery/pkg/apimachinery/announced"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -55,31 +54,4 @@ func (api *ResourceDefinition) GetExternalGroupVersionResource() schema.GroupVer
 
 func (api *ResourceDefinition) GetInternalGroupVersionResource() schema.GroupVersionResource {
 	return api.GroupVersionResource.GroupResource().WithVersion(runtime.APIVersionInternal)
-}
-
-type BasicResource interface {
-	HasObjectMeta
-	HasSpec
-	HasStatus
-	HasGeneration
-}
-
-type HasStatus interface {
-	NewStatus() runtime.Object
-	GetStatus() runtime.Object
-	SetStatus(status runtime.Object)
-}
-
-type HasSpec interface {
-	GetSpec() runtime.Object
-	SetSpec(spec runtime.Object)
-}
-
-type HasObjectMeta interface {
-	GetObjectMeta() *metav1.ObjectMeta
-}
-
-type HasGeneration interface {
-	SetGeneration(generation int)
-	GetGeneration() int
 }

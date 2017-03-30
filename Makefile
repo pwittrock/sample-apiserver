@@ -12,6 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# NOTE: Project must live under GOPATH/src/github.com/pwittrock/apiserver-helloworld
+# for the code to compile
+REPO=github.com/pwittrock/apiserver-helloworld
+
 all: build
 
 clean: cleanbin cleangenerated cleandocs

@@ -16,13 +16,29 @@ limitations under the License.
 
 package defaults
 
-import "k8s.io/apimachinery/pkg/runtime"
+import (
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+)
 
 type BasicStorage struct {
-	NewListFunc func() runtime.Object
-	NewFunc     func() runtime.Object
+	NewListFunc  func() runtime.Object
+	NewFunc      func() runtime.Object
+	GroupVersion schema.GroupVersion
 }
 
-func (BasicStorage) ObjectNameFunc(obj runtime.Object) (string, error) {
+func (s BasicStorage) ObjectNameFunc(obj runtime.Object) (string, error) {
 	return obj.(BasicResource).GetObjectMeta().Name, nil
+}
+
+func (s BasicStorage) Register(scheme *runtime.Scheme) error {
+	if t := s.NewFunc(); t != nil {
+		scheme.AddKnownTypes(s.GroupVersion, t)
+	}
+	if t := s.NewListFunc(); t != nil {
+		scheme.AddKnownTypes(s.GroupVersion, t)
+	}
+	metav1.AddToGroupVersion(scheme, s.GroupVersion)
+	return nil
 }
