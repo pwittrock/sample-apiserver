@@ -6,7 +6,7 @@ Kubernetes apiservers.
 
 ## Building a simple apiserver
 
-1. Copy the example and find all `ACTION REQUIRED` sections.  Follow instructions.
+1. Copy the [example directory](https://github.com/pwittrock/sample-apiserver/tree/helloworld-2/vendor/k8s.io/apiserver-builder/example) and find all `ACTION REQUIRED` sections.  Follow instructions.
  - main.go: update import statements and uncomment starting the server
  - apis/doc.go: set your domain name
  - .../yourapigroup: change package name to match your api group
