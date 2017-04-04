@@ -7,7 +7,7 @@ Kubernetes apiservers.
 ## Building a simple apiserver
 
 1. Copy the example and find all `ACTION REQUIRED` sections.  Follow instructions.
- - main.go: update import statements and uncomment registration
+ - main.go: update import statements and uncomment starting the server
  - apis/doc.go: set your domain name
  - .../yourapigroup: change package name to match your api group
  - .../yourapiversion: change package name to match your version
@@ -16,9 +16,16 @@ Kubernetes apiservers.
 
 
 2. Generate code
+  - `export REPO=github.com/orgname/reponame`
+  - create the file `boilerplate.go.txt` containing the boilerplate headers for generated code
   - generate registration code
+    - `go run vendor/k8s.io/apiserver-builder/cmd/genwiring/main.go -i $(REPO)/pkg/apis/...`
+  - generate conversion code
+    - `go go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/conversion-gen/main.go -i $(REPO)/pkg/apis/...  --extra-peer-dirs="k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/conversion,k8s.io/apimachinery/pkg/runtime" -o ~/apiserver-helloworld/src/  -O zz_generated.conversion --go-header-file boilerplate.go.txt`
   - generate deepcopy code
-  - generate typeconversion code
+    - `go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/deepcopy-gen/main.go -i $(REPO)/pkg/apis/... -o ~/apiserver-helloworld/src/ -O zz_generated.deepcopy --go-header-file boilerplate.go.txt`
+  - generate openapi code
+    - `go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/openapi-gen/main.go  -i "$(REPO)/pkg/apis/...,k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/api/resource/,k8s.io/apimachinery/pkg/version/,k8s.io/apimachinery/pkg/runtime/,k8s.io/apimachinery/pkg//util/intstr/" --output-package "$(REPO)/pkg/openapi" --go-header-file boilerplate.go.txt`
 
 3. Build the apiserver main.go
   - go build main.go
@@ -34,6 +41,12 @@ Kubernetes apiservers.
 
 ## Generating docs
 
-
+1. Vendor `vendor/github.com/kubernetes-incubator/reference-docs`
+2. Start the server and look in the output for the curl command with a bearer token
+3. `curl -k -H "Authorization: Bearer <bearer>" https://localhost:9443/swagger.json` > docs/openapi-spec/swagger.json
+4. Build the static docs
+  - `go run vendor/github.com/kubernetes-incubator/reference-docs/main.go --doc-type open-api --allow-errors --use-tags --config-dir docs --gen-open-api-dir vendor/github.com/kubernetes-incubator/reference-docs/gen_open_api`
+  - `docker run -v $(shell pwd)/docs/includes:/source -v $(shell pwd)/docs/build:/build -v $(shell pwd)/docs/:/manifest pwittrock/brodocs`
+5. Open docs file in browser `docs/build/index.html`
 
 ## Using apiserver-builder libraries directly (without generating code)
