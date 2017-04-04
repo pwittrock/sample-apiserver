@@ -17,12 +17,7 @@ limitations under the License.
 package main
 
 import (
-	"flag"
-	"os"
-
-	"k8s.io/apimachinery/pkg/util/wait"
 	"k8s.io/apiserver-builder/pkg/cmd/server"
-	"k8s.io/apiserver/pkg/util/logs"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/pwittrock/apiserver-helloworld/pkg/apis"
@@ -30,16 +25,5 @@ import (
 )
 
 func main() {
-	logs.InitLogs()
-	defer logs.FlushLogs()
-
-	// RegisterTypes the openapi
-	server.GetOpenApiDefinition = openapi.GetOpenAPIDefinitions
-
-	// To disable providers, manually specify the list provided by getKnownProviders()
-	cmd := server.NewCommandStartServer(os.Stdout, os.Stderr, apis.GetAllApiBuilders(), wait.NeverStop)
-	cmd.Flags().AddGoFlagSet(flag.CommandLine)
-	if err := cmd.Execute(); err != nil {
-		panic(err)
-	}
+	server.StartApiServer(apis.GetAllApiBuilders(), openapi.GetOpenAPIDefinitions)
 }

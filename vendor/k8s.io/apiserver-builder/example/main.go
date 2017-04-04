@@ -17,33 +17,13 @@ limitations under the License.
 package main
 
 import (
-	"flag"
-	"os"
-
-	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apiserver-builder/pkg/builders"
-	"k8s.io/apiserver-builder/pkg/cmd/server"
-	"k8s.io/apiserver/pkg/util/logs"
-	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	_ "k8s.io/client-go/plugin/pkg/client/auth" // Enable cloud provider auth
 	// ACTION REQUIRED: update these with your go import paths and uncomment
 	//"github.com/org/repo/pkg/apis"
 	//"github.com/org/repo/pkg/openapi"
 )
 
 func main() {
-	logs.InitLogs()
-	defer logs.FlushLogs()
-	var apis []*builders.APIGroupBuilder
-
 	// ACTION REQUIRED: uncomment this
-	// RegisterTypes the openapi
-	//server.GetOpenApiDefinition = openapi.GetOpenAPIDefinitions
-	//apis = *apis.GetAllApiBuilders()
-
-	// To disable providers, manually specify the list provided by getKnownProviders()
-	cmd := server.NewCommandStartServer(os.Stdout, os.Stderr, apis, wait.NeverStop)
-	cmd.Flags().AddGoFlagSet(flag.CommandLine)
-	if err := cmd.Execute(); err != nil {
-		panic(err)
-	}
+	//server.StartApiServer(apis.GetAllApiBuilders(), openapi.GetOpenAPIDefinitions)
 }

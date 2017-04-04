@@ -28,9 +28,13 @@ import (
 	genericapiserver "k8s.io/apiserver/pkg/server"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 
+	"flag"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/openapi"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apiserver/pkg/util/logs"
 	"k8s.io/client-go/pkg/api"
+	"os"
 )
 
 const defaultEtcdPathPrefix = "/registry/sample.kubernetes.io"
@@ -43,6 +47,22 @@ type ServerOptions struct {
 	StdOut      io.Writer
 	StdErr      io.Writer
 	APIBuilders []*builders.APIGroupBuilder
+}
+
+// StartApiServer starts an apiserver hosting the provider apis and openapi definitions.
+func StartApiServer(apis []*builders.APIGroupBuilder, openapidefs openapi.GetOpenAPIDefinitions) {
+	logs.InitLogs()
+	defer logs.FlushLogs()
+
+	GetOpenApiDefinition = openapidefs
+
+	// To disable providers, manually specify the list provided by getKnownProviders()
+	cmd := NewCommandStartServer(os.Stdout, os.Stderr, apis, wait.NeverStop)
+	cmd.Flags().AddGoFlagSet(flag.CommandLine)
+	if err := cmd.Execute(); err != nil {
+		panic(err)
+	}
+
 }
 
 func NewServerOptions(out, errOut io.Writer, builders []*builders.APIGroupBuilder) *ServerOptions {
