@@ -87,6 +87,8 @@ func NewServerOptions(etcdPath string, out, errOut io.Writer, builders []*builde
 
 var printBearerToken = false
 var printOpenapi = false
+var delegatedAuth = true
+var etcd = true
 
 // NewCommandStartMaster provides a CLI handler for 'start master' command
 func NewCommandStartServer(etcdPath string, out, errOut io.Writer, builders []*builders.APIGroupBuilder, stopCh <-chan struct{}) *cobra.Command {
@@ -114,6 +116,10 @@ func NewCommandStartServer(etcdPath string, out, errOut io.Writer, builders []*b
 		"If true, print a curl command with the bearer token to test the server")
 	flags.BoolVar(&printOpenapi, "print-openapi", false,
 		"If true, print the openapi json and exit.")
+	flags.BoolVar(&delegatedAuth, "delegated-auth", true,
+		"If true, setup delegated auth.")
+	flags.BoolVar(&etcd, "etcd", true,
+		"If true, use etcd storage.")
 	o.RecommendedOptions.AddFlags(flags)
 
 	return cmd
@@ -134,7 +140,28 @@ func (o ServerOptions) Config() (*apiserver.Config, error) {
 	}
 
 	serverConfig := genericapiserver.NewConfig().WithSerializer(api.Codecs)
-	if err := o.RecommendedOptions.ApplyTo(serverConfig); err != nil {
+
+	if delegatedAuth {
+
+		if err := o.RecommendedOptions.Authentication.ApplyTo(serverConfig); err != nil {
+			return nil, err
+		}
+		if err := o.RecommendedOptions.Authorization.ApplyTo(serverConfig); err != nil {
+			return nil, err
+		}
+	}
+	if etcd {
+		if err := o.RecommendedOptions.Etcd.ApplyTo(serverConfig); err != nil {
+			return nil, err
+		}
+	}
+	if err := o.RecommendedOptions.SecureServing.ApplyTo(serverConfig); err != nil {
+		return nil, err
+	}
+	if err := o.RecommendedOptions.Audit.ApplyTo(serverConfig); err != nil {
+		return nil, err
+	}
+	if err := o.RecommendedOptions.Features.ApplyTo(serverConfig); err != nil {
 		return nil, err
 	}
 
