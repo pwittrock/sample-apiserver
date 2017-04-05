@@ -19,6 +19,7 @@ package builders
 import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
 	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
@@ -94,19 +95,27 @@ func (b *versionedResourceBuilder) NewList() runtime.Object {
 	return b.NewListFunc()
 }
 
+type StorageWrapper struct {
+	registry.Store
+}
+
+func (s StorageWrapper) Create(ctx request.Context, obj runtime.Object) (runtime.Object, error) {
+	return s.Store.Create(ctx, obj)
+}
+
 //
 func (b *versionedResourceBuilder) Build(
 	group string,
 	optionsGetter generic.RESTOptionsGetter) rest.Storage {
 
 	// Set a default strategy
-	store := &registry.Store{
+	store := &StorageWrapper{registry.Store{
 		Copier:            api.Scheme,
 		NewFunc:           b.Unversioned.New,     // Use the unversioned type
 		NewListFunc:       b.Unversioned.NewList, // Use the unversioned type
 		QualifiedResource: b.getGroupResource(group),
 		WatchCacheSize:    1000,
-	}
+	}}
 
 	// Use default, requires
 	options := &generic.StoreOptions{RESTOptions: optionsGetter}

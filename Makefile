@@ -44,6 +44,7 @@ cleandocs:
 	rm -rf $(shell pwd)/docs/includes/_generated_*
 
 docs: cleandocs
+
 	go run vendor/github.com/kubernetes-incubator/reference-docs/main.go --doc-type open-api --allow-errors --use-tags --config-dir docs --gen-open-api-dir vendor/github.com/kubernetes-incubator/reference-docs/gen_open_api
 	docker run -v $(shell pwd)/docs/includes:/source -v $(shell pwd)/docs/build:/build -v $(shell pwd)/docs/:/manifest pwittrock/brodocs
 

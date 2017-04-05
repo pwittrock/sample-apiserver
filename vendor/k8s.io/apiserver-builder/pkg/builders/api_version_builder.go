@@ -17,7 +17,6 @@ limitations under the License.
 package builders
 
 import (
-	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/apimachinery/announced"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -57,13 +56,11 @@ func (s *VersionedApiBuilder) registerTypes(scheme *runtime.Scheme) error {
 	for _, k := range s.Kinds {
 		// RegisterTypes type
 		if t := k.New(); t != nil {
-			glog.Infof("Registering Versioned Type  %T", k.New())
 			scheme.AddKnownTypes(s.GroupVersion, t) // Register the versioned type
 		}
 
 		// RegisterTypes list type if it exists
 		if l := k.NewList(); l != nil {
-			glog.Infof("Registering Versioned Type  %T", l)
 			scheme.AddKnownTypes(s.GroupVersion, l) // Register the versioned type
 		}
 	}
@@ -113,13 +110,11 @@ func (s *UnVersionedApiBuilder) registerTypes(scheme *runtime.Scheme) error {
 	for _, k := range s.Kinds {
 		// RegisterTypes type
 		if t := k.New(); t != nil {
-			glog.Infof("Registering Unversioned Type %T", k.New())
 			scheme.AddKnownTypes(s.GroupVersion, t) // Register the unversioned type
 		}
 
 		// RegisterTypes list type if it exists
 		if i, ok := k.(WithList); ok && i.NewList() != nil {
-			glog.Infof("Registering Unversioned Type %T", i.NewList())
 			scheme.AddKnownTypes(s.GroupVersion, i.NewList()) // Register the unversioned type
 		}
 	}

@@ -14,16 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package main
+package validators
 
-import (
-	_ "k8s.io/client-go/plugin/pkg/client/auth" // Enable cloud provider auth
-	// ACTION REQUIRED: update these with your go import paths and uncomment
-	//"github.com/org/repo/pkg/apis"
-	//"github.com/org/repo/pkg/openapi"
-)
+var OpenAPI = OpenAPIValidator{}
 
-func main() {
-	// ACTION REQUIRED: uncomment this
-	//server.StartApiServer("/registry/sample.kubernetes.io", apis.GetAllApiBuilders(), openapi.GetOpenAPIDefinitions)
+type OpenAPIValidator struct {
+	OpenApi string
+}
+
+func (o *OpenAPIValidator) SetSchema(openapi string) error {
+	var err error
+	o.OpenApi = openapi
+	return err
 }

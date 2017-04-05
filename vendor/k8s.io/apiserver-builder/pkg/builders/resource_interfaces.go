@@ -24,7 +24,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
 )
@@ -51,7 +50,7 @@ type HasObjectMeta interface {
 }
 
 type StorageBuilder interface {
-	Build(builder StorageBuilder, store *registry.Store, options *generic.StoreOptions)
+	Build(builder StorageBuilder, store *StorageWrapper, options *generic.StoreOptions)
 
 	names.NameGenerator
 	runtime.ObjectTyper

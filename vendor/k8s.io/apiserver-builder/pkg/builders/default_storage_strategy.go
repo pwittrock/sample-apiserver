@@ -26,7 +26,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/apiserver/pkg/endpoints/request"
 	"k8s.io/apiserver/pkg/registry/generic"
-	"k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/registry/rest"
 	"k8s.io/apiserver/pkg/storage"
 	"k8s.io/apiserver/pkg/storage/names"
@@ -60,7 +59,7 @@ func (DefaultStorageStrategy) ObjectNameFunc(obj runtime.Object) (string, error)
 }
 
 // Build sets the strategy for the store
-func (DefaultStorageStrategy) Build(builder StorageBuilder, store *registry.Store, options *generic.StoreOptions) {
+func (DefaultStorageStrategy) Build(builder StorageBuilder, store *StorageWrapper, options *generic.StoreOptions) {
 	store.PredicateFunc = builder.BasicMatch
 	store.ObjectNameFunc = builder.ObjectNameFunc
 	store.CreateStrategy = builder

@@ -26,18 +26,20 @@ import (
 	"k8s.io/apiserver-builder/pkg/apiserver"
 	"k8s.io/apiserver-builder/pkg/builders"
 	genericapiserver "k8s.io/apiserver/pkg/server"
+	genericmux "k8s.io/apiserver/pkg/server/mux"
 	genericoptions "k8s.io/apiserver/pkg/server/options"
 
+	"bytes"
 	"flag"
 	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/openapi"
 	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/apiserver-builder/pkg/validators"
 	"k8s.io/apiserver/pkg/util/logs"
 	"k8s.io/client-go/pkg/api"
+	"net/http"
 	"os"
 )
-
-const defaultEtcdPathPrefix = "/registry/sample.kubernetes.io"
 
 var GetOpenApiDefinition openapi.GetOpenAPIDefinitions
 
@@ -50,14 +52,14 @@ type ServerOptions struct {
 }
 
 // StartApiServer starts an apiserver hosting the provider apis and openapi definitions.
-func StartApiServer(apis []*builders.APIGroupBuilder, openapidefs openapi.GetOpenAPIDefinitions) {
+func StartApiServer(etcdPath string, apis []*builders.APIGroupBuilder, openapidefs openapi.GetOpenAPIDefinitions) {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
 	GetOpenApiDefinition = openapidefs
 
 	// To disable providers, manually specify the list provided by getKnownProviders()
-	cmd := NewCommandStartServer(os.Stdout, os.Stderr, apis, wait.NeverStop)
+	cmd := NewCommandStartServer(etcdPath, os.Stdout, os.Stderr, apis, wait.NeverStop)
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 	if err := cmd.Execute(); err != nil {
 		panic(err)
@@ -65,14 +67,14 @@ func StartApiServer(apis []*builders.APIGroupBuilder, openapidefs openapi.GetOpe
 
 }
 
-func NewServerOptions(out, errOut io.Writer, builders []*builders.APIGroupBuilder) *ServerOptions {
+func NewServerOptions(etcdPath string, out, errOut io.Writer, builders []*builders.APIGroupBuilder) *ServerOptions {
 	versions := []schema.GroupVersion{}
 	for _, b := range builders {
 		versions = append(versions, b.GetLegacyCodec()...)
 	}
 
 	o := &ServerOptions{
-		RecommendedOptions: genericoptions.NewRecommendedOptions(defaultEtcdPathPrefix, api.Scheme, api.Codecs.LegacyCodec(versions...)),
+		RecommendedOptions: genericoptions.NewRecommendedOptions(etcdPath, api.Scheme, api.Codecs.LegacyCodec(versions...)),
 
 		StdOut:      out,
 		StdErr:      errOut,
@@ -84,10 +86,11 @@ func NewServerOptions(out, errOut io.Writer, builders []*builders.APIGroupBuilde
 }
 
 var printBearerToken = false
+var printOpenapi = false
 
 // NewCommandStartMaster provides a CLI handler for 'start master' command
-func NewCommandStartServer(out, errOut io.Writer, builders []*builders.APIGroupBuilder, stopCh <-chan struct{}) *cobra.Command {
-	o := NewServerOptions(out, errOut, builders)
+func NewCommandStartServer(etcdPath string, out, errOut io.Writer, builders []*builders.APIGroupBuilder, stopCh <-chan struct{}) *cobra.Command {
+	o := NewServerOptions(etcdPath, out, errOut, builders)
 
 	cmd := &cobra.Command{
 		Short: "Launch an API server",
@@ -109,6 +112,8 @@ func NewCommandStartServer(out, errOut io.Writer, builders []*builders.APIGroupB
 	flags := cmd.Flags()
 	flags.BoolVar(&printBearerToken, "print-bearer-token", false,
 		"If true, print a curl command with the bearer token to test the server")
+	flags.BoolVar(&printOpenapi, "print-openapi", false,
+		"If true, print the openapi json and exit.")
 	o.RecommendedOptions.AddFlags(flags)
 
 	return cmd
@@ -145,10 +150,10 @@ func (o ServerOptions) SetAuthOptions() error {
 	//if err != nil {
 	//	return err
 	//}
-	//
+
 	//config.GenericConfig.LoopbackClientConfig =
 	//authorizationConfig := s.Authorization.ToAuthorizationConfig(sharedInformers)
-	//
+
 	//apiAuthenticator, securityDefinitions, err := authenticatorConfig.New()
 	//if err != nil {
 	//	return nil, nil, fmt.Errorf("invalid authentication config: %v", err)
@@ -165,8 +170,6 @@ func (o ServerOptions) RunServer(stopCh <-chan struct{}) error {
 	}
 
 	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(GetOpenApiDefinition, api.Scheme)
-	//config.GenericConfig.OpenAPIConfig.PostProcessSpec = postProcessOpenAPISpecForBackwardCompatibility
-	//config.GenericConfig.OpenAPIConfig.SecurityDefinitions = securityDefinitions
 	config.GenericConfig.OpenAPIConfig.Info.Title = "Api"
 
 	if printBearerToken {
@@ -186,7 +189,35 @@ func (o ServerOptions) RunServer(stopCh <-chan struct{}) error {
 	if err != nil {
 		return err
 	}
-	server.GenericAPIServer.PrepareRun().Run(stopCh)
+
+	s := server.GenericAPIServer.PrepareRun()
+	err = validators.OpenAPI.SetSchema(readOpenapi(server.GenericAPIServer.HandlerContainer))
+	if printOpenapi {
+		fmt.Printf("%s", validators.OpenAPI.OpenApi)
+		os.Exit(0)
+	}
+	if err != nil {
+		return err
+	}
+
+	s.Run(stopCh)
 
 	return nil
 }
+
+func readOpenapi(handler *genericmux.APIContainer) string {
+	req, err := http.NewRequest("GET", "/swagger.json", nil)
+	if err != nil {
+		panic(fmt.Errorf("Could not create openapi request %v", err))
+	}
+	resp := &BufferedResponse{}
+	handler.ServeHTTP(resp, req)
+	return resp.String()
+}
+
+type BufferedResponse struct {
+	bytes.Buffer
+}
+
+func (BufferedResponse) Header() http.Header { return http.Header{} }
+func (BufferedResponse) WriteHeader(int)     {}

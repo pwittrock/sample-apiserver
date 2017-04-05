@@ -17,7 +17,6 @@ limitations under the License.
 package builders
 
 import (
-	"github.com/golang/glog"
 	"k8s.io/apimachinery/pkg/apimachinery/announced"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -105,8 +104,6 @@ func (g *APIGroupBuilder) Build(optionsGetter generic.RESTOptionsGetter) *generi
 
 	// First group version is preferred
 	i.GroupMeta.GroupVersion = g.Versions[0].GroupVersion
-
-	glog.Infof("Creating group %v", g.Name)
 
 	// Register the endpoints with the group
 	g.registerEndpoints(optionsGetter, i.VersionedResourcesStorageMap)
