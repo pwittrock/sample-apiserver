@@ -1,4 +1,3 @@
-
 /*
 Copyright 2017 The Kubernetes Authors.
 
@@ -18,5 +17,7 @@ limitations under the License.
 // +k8s:openapi-gen=true
 // +k8s:deepcopy-gen=package,register
 // +k8s:conversion-gen=github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom
+// +k8s:defaulter-gen=TypeMeta
 
-package v2
+// +groupName=mushroomkingdom.k8s.io
+package v2 // import "github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2"

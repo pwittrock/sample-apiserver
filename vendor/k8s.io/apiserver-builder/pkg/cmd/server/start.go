@@ -49,6 +49,17 @@ type ServerOptions struct {
 	StdOut      io.Writer
 	StdErr      io.Writer
 	APIBuilders []*builders.APIGroupBuilder
+
+	PrintBearerToken bool
+	PrintOpenapi     bool
+	RunDelegatedAuth bool
+	BearerToken      string
+	PostStartHooks   []PostStartHook
+}
+
+type PostStartHook struct {
+	Fn   genericapiserver.PostStartHookFunc
+	Name string
 }
 
 // StartApiServer starts an apiserver hosting the provider apis and openapi definitions.
@@ -59,12 +70,11 @@ func StartApiServer(etcdPath string, apis []*builders.APIGroupBuilder, openapide
 	GetOpenApiDefinition = openapidefs
 
 	// To disable providers, manually specify the list provided by getKnownProviders()
-	cmd := NewCommandStartServer(etcdPath, os.Stdout, os.Stderr, apis, wait.NeverStop)
+	cmd, _ := NewCommandStartServer(etcdPath, os.Stdout, os.Stderr, apis, wait.NeverStop)
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 	if err := cmd.Execute(); err != nil {
 		panic(err)
 	}
-
 }
 
 func NewServerOptions(etcdPath string, out, errOut io.Writer, builders []*builders.APIGroupBuilder) *ServerOptions {
@@ -76,24 +86,22 @@ func NewServerOptions(etcdPath string, out, errOut io.Writer, builders []*builde
 	o := &ServerOptions{
 		RecommendedOptions: genericoptions.NewRecommendedOptions(etcdPath, api.Scheme, api.Codecs.LegacyCodec(versions...)),
 
-		StdOut:      out,
-		StdErr:      errOut,
-		APIBuilders: builders,
+		StdOut:           out,
+		StdErr:           errOut,
+		APIBuilders:      builders,
+		RunDelegatedAuth: true,
 	}
 	o.RecommendedOptions.SecureServing.ServingOptions.BindPort = 443
 
 	return o
 }
 
-var printBearerToken = false
-var printOpenapi = false
-var delegatedAuth = true
-var etcd = true
-
 // NewCommandStartMaster provides a CLI handler for 'start master' command
-func NewCommandStartServer(etcdPath string, out, errOut io.Writer, builders []*builders.APIGroupBuilder, stopCh <-chan struct{}) *cobra.Command {
+func NewCommandStartServer(etcdPath string, out, errOut io.Writer, builders []*builders.APIGroupBuilder,
+	stopCh <-chan struct{}) (*cobra.Command, *ServerOptions) {
 	o := NewServerOptions(etcdPath, out, errOut, builders)
 
+	// Support overrides
 	cmd := &cobra.Command{
 		Short: "Launch an API server",
 		Long:  "Launch an API server",
@@ -112,17 +120,14 @@ func NewCommandStartServer(etcdPath string, out, errOut io.Writer, builders []*b
 	}
 
 	flags := cmd.Flags()
-	flags.BoolVar(&printBearerToken, "print-bearer-token", false,
+	flags.BoolVar(&o.PrintBearerToken, "print-bearer-token", false,
 		"If true, print a curl command with the bearer token to test the server")
-	flags.BoolVar(&printOpenapi, "print-openapi", false,
+	flags.BoolVar(&o.PrintOpenapi, "print-openapi", false,
 		"If true, print the openapi json and exit.")
-	flags.BoolVar(&delegatedAuth, "delegated-auth", true,
+	flags.BoolVar(&o.RunDelegatedAuth, "delegated-auth", true,
 		"If true, setup delegated auth.")
-	flags.BoolVar(&etcd, "etcd", true,
-		"If true, use etcd storage.")
 	o.RecommendedOptions.AddFlags(flags)
-
-	return cmd
+	return cmd, o
 }
 
 func (o ServerOptions) Validate(args []string) error {
@@ -141,8 +146,7 @@ func (o ServerOptions) Config() (*apiserver.Config, error) {
 
 	serverConfig := genericapiserver.NewConfig().WithSerializer(api.Codecs)
 
-	if delegatedAuth {
-
+	if o.RunDelegatedAuth {
 		if err := o.RecommendedOptions.Authentication.ApplyTo(serverConfig); err != nil {
 			return nil, err
 		}
@@ -150,10 +154,8 @@ func (o ServerOptions) Config() (*apiserver.Config, error) {
 			return nil, err
 		}
 	}
-	if etcd {
-		if err := o.RecommendedOptions.Etcd.ApplyTo(serverConfig); err != nil {
-			return nil, err
-		}
+	if err := o.RecommendedOptions.Etcd.ApplyTo(serverConfig); err != nil {
+		return nil, err
 	}
 	if err := o.RecommendedOptions.SecureServing.ApplyTo(serverConfig); err != nil {
 		return nil, err
@@ -171,26 +173,7 @@ func (o ServerOptions) Config() (*apiserver.Config, error) {
 	return config, nil
 }
 
-func (o ServerOptions) SetAuthOptions() error {
-	return nil
-	//config, err := o.Config()
-	//if err != nil {
-	//	return err
-	//}
-
-	//config.GenericConfig.LoopbackClientConfig =
-	//authorizationConfig := s.Authorization.ToAuthorizationConfig(sharedInformers)
-
-	//apiAuthenticator, securityDefinitions, err := authenticatorConfig.New()
-	//if err != nil {
-	//	return nil, nil, fmt.Errorf("invalid authentication config: %v", err)
-	//}
-	//
-	//apiAuthorizer, err := authorizationConfig.New()
-	//config.GenericConfig.Authenticator
-}
-
-func (o ServerOptions) RunServer(stopCh <-chan struct{}) error {
+func (o *ServerOptions) RunServer(stopCh <-chan struct{}) error {
 	config, err := o.Config()
 	if err != nil {
 		return err
@@ -199,7 +182,7 @@ func (o ServerOptions) RunServer(stopCh <-chan struct{}) error {
 	config.GenericConfig.OpenAPIConfig = genericapiserver.DefaultOpenAPIConfig(GetOpenApiDefinition, api.Scheme)
 	config.GenericConfig.OpenAPIConfig.Info.Title = "Api"
 
-	if printBearerToken {
+	if o.PrintBearerToken {
 		glog.Infof("Serving on loopback...")
 		glog.Infof("\n\n********************************\nTo test the server run:\n"+
 			"curl -k -H \"Authorization: Bearer %s\" %s\n********************************\n\n",
@@ -207,6 +190,7 @@ func (o ServerOptions) RunServer(stopCh <-chan struct{}) error {
 			config.GenericConfig.LoopbackClientConfig.Host)
 		glog.Infof("Local Authorization Token: %s", config.GenericConfig.LoopbackClientConfig.BearerToken)
 	}
+	o.BearerToken = config.GenericConfig.LoopbackClientConfig.BearerToken
 
 	for _, provider := range o.APIBuilders {
 		config.AddApi(provider)
@@ -217,9 +201,13 @@ func (o ServerOptions) RunServer(stopCh <-chan struct{}) error {
 		return err
 	}
 
+	for _, h := range o.PostStartHooks {
+		server.GenericAPIServer.AddPostStartHook(h.Name, h.Fn)
+	}
+
 	s := server.GenericAPIServer.PrepareRun()
 	err = validators.OpenAPI.SetSchema(readOpenapi(server.GenericAPIServer.HandlerContainer))
-	if printOpenapi {
+	if o.PrintOpenapi {
 		fmt.Printf("%s", validators.OpenAPI.OpenApi)
 		os.Exit(0)
 	}

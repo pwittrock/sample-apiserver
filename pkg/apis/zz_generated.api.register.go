@@ -19,6 +19,8 @@ limitations under the License.
 package apis
 
 import (
+	"github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom"
+	hyrulekingdomv3 "github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3"
 	"github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom"
 	mushroomkingdomv2 "github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2"
 	"k8s.io/apiserver-builder/pkg/builders"
@@ -28,8 +30,21 @@ import (
 // so they can be registered with the apiserver
 func GetAllApiBuilders() []*builders.APIGroupBuilder {
 	return []*builders.APIGroupBuilder{
+		GetHyrulekingdomAPIBuilder(),
 		GetMushroomkingdomAPIBuilder(),
 	}
+}
+
+var hyrulekingdomApiGroup = builders.NewApiGroupBuilder(
+	"hyrulekingdom.k8s.io",
+	"github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom").
+	WithUnVersionedApi(hyrulekingdom.ApiVersion).
+	WithVersionedApis(
+		hyrulekingdomv3.ApiVersion,
+	)
+
+func GetHyrulekingdomAPIBuilder() *builders.APIGroupBuilder {
+	return hyrulekingdomApiGroup
 }
 
 var mushroomkingdomApiGroup = builders.NewApiGroupBuilder(

@@ -1,4 +1,3 @@
-
 /*
 Copyright 2017 The Kubernetes Authors.
 
@@ -16,7 +15,7 @@ limitations under the License.
 */
 
 // +k8s:deepcopy-gen=package,register
+// +groupName=mushroomkingdom.k8s.io
 
 // Package api is the internal version of the API.
 package mushroomkingdom
-

@@ -14,36 +14,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v2
+package v3
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 // +genclient=true
-// +k8s:openapi-gen=true
-// +resource=peachescastles
-// +subresource=peachescastles/scalecastle,PeachesCastle,ScaleCastle,ScalePeachesCastleREST
-type PeachesCastle struct {
+
+// +resource=zeldascastles
+type ZeldasCastle struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec   PeachesCastleSpec   `json:"spec,omitempty"`
-	Status PeachesCastleStatus `json:"status,omitempty"`
+	Spec   ZeldasCastleSpec   `json:"spec,omitempty"`
+	Status ZeldasCastleStatus `json:"status,omitempty"`
 }
 
-type PeachesCastleSpec struct {
-	Mushrooms int `json:"mushrooms,omitempty"`
+type ZeldasCastleSpec struct {
+	Rupees int `json:"mushrooms,omitempty"`
 }
 
-type PeachesCastleStatus struct {
+type ZeldasCastleStatus struct {
 	Message string `json:"message,omitempty"`
-}
-
-// +subresource-request
-type ScaleCastle struct {
-	metav1.TypeMeta
-	// Standard object metadata; More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#metadata.
-	// +optional
-	metav1.ObjectMeta
 }

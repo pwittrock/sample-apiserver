@@ -30,6 +30,117 @@ import (
 
 func GetOpenAPIDefinitions(ref openapi.ReferenceCallback) map[string]openapi.OpenAPIDefinition {
 	return map[string]openapi.OpenAPIDefinition{
+		"github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastle": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Properties: map[string]spec.Schema{
+						"kind": {
+							SchemaProps: spec.SchemaProps{
+								Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#types-kinds",
+								Type:        []string{"string"},
+								Format:      "",
+							},
+						},
+						"apiVersion": {
+							SchemaProps: spec.SchemaProps{
+								Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#resources",
+								Type:        []string{"string"},
+								Format:      "",
+							},
+						},
+						"metadata": {
+							SchemaProps: spec.SchemaProps{
+								Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"),
+							},
+						},
+						"spec": {
+							SchemaProps: spec.SchemaProps{
+								Ref: ref("github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastleSpec"),
+							},
+						},
+						"status": {
+							SchemaProps: spec.SchemaProps{
+								Ref: ref("github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastleStatus"),
+							},
+						},
+					},
+				},
+			},
+			Dependencies: []string{
+				"github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastleSpec", "github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastleStatus", "k8s.io/apimachinery/pkg/apis/meta/v1.ObjectMeta"},
+		},
+		"github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastleList": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Properties: map[string]spec.Schema{
+						"kind": {
+							SchemaProps: spec.SchemaProps{
+								Description: "Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#types-kinds",
+								Type:        []string{"string"},
+								Format:      "",
+							},
+						},
+						"apiVersion": {
+							SchemaProps: spec.SchemaProps{
+								Description: "APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: http://releases.k8s.io/HEAD/docs/devel/api-conventions.md#resources",
+								Type:        []string{"string"},
+								Format:      "",
+							},
+						},
+						"metadata": {
+							SchemaProps: spec.SchemaProps{
+								Ref: ref("k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"),
+							},
+						},
+						"items": {
+							SchemaProps: spec.SchemaProps{
+								Type: []string{"array"},
+								Items: &spec.SchemaOrArray{
+									Schema: &spec.Schema{
+										SchemaProps: spec.SchemaProps{
+											Ref: ref("github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastle"),
+										},
+									},
+								},
+							},
+						},
+					},
+					Required: []string{"items"},
+				},
+			},
+			Dependencies: []string{
+				"github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastle", "k8s.io/apimachinery/pkg/apis/meta/v1.ListMeta"},
+		},
+		"github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastleSpec": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Properties: map[string]spec.Schema{
+						"mushrooms": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"integer"},
+								Format: "int32",
+							},
+						},
+					},
+				},
+			},
+			Dependencies: []string{},
+		},
+		"github.com/pwittrock/apiserver-helloworld/pkg/apis/hyrulekingdom/v3.ZeldasCastleStatus": {
+			Schema: spec.Schema{
+				SchemaProps: spec.SchemaProps{
+					Properties: map[string]spec.Schema{
+						"message": {
+							SchemaProps: spec.SchemaProps{
+								Type:   []string{"string"},
+								Format: "",
+							},
+						},
+					},
+				},
+			},
+			Dependencies: []string{},
+		},
 		"github.com/pwittrock/apiserver-helloworld/pkg/apis/mushroomkingdom/v2.PeachesCastle": {
 			Schema: spec.Schema{
 				SchemaProps: spec.SchemaProps{
