@@ -17,6 +17,13 @@
 REPO=github.com/pwittrock/apiserver-helloworld
 SRC=$(REPO)/pkg/apis/...
 GENERIC_API="k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/api/resource/,k8s.io/apimachinery/pkg/version/,k8s.io/apimachinery/pkg/runtime/,k8s.io/apimachinery/pkg//util/intstr/"
+OUT=~/apiserver-helloworld/src/
+CLIENT_PKG=$(REPO)/pkg/client
+CLIENT_PATH=$(CLIENT_PKG)/clientset_generated
+CLIENT=clientset
+INTERNAL_CLIENT=internalclientset
+LISTERS_PKG="$(CLIENT_PKG)/listers_generated"
+INFORMERS_PKG="$(CLIENT_PKG)/informers_generated"
 
 all: build
 
@@ -31,16 +38,16 @@ cleangenerated:
 	bash -c "find ./pkg/apis/ -name zz_generated.conversion.go | xargs rm -f"
 	rm -rf pkg/client/clientset_generated/
 
-generate: cleangenerated
-# generate:
-	go run vendor/k8s.io/apiserver-builder/cmd/genwiring/main.go -i $(REPO)/pkg/apis/...
-	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/conversion-gen/main.go -i "$(SRC)"  --extra-peer-dirs="k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/conversion,k8s.io/apimachinery/pkg/runtime" -o ~/apiserver-helloworld/src/  -O zz_generated.conversion --go-header-file boilerplate.go.txt
-	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/deepcopy-gen/main.go -i "$(SRC)" -o ~/apiserver-helloworld/src/ -O zz_generated.deepcopy --go-header-file boilerplate.go.txt
-	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/openapi-gen/main.go  -i "$(SRC),$(GENERIC_API)" --output-package "$(REPO)/pkg/openapi" --go-header-file boilerplate.go.txt
-	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/client-gen/main.go --input-base "$(REPO)/pkg/apis/" --input "mushroomkingdom/v2,hyrulekingdom/v3" --clientset-path $(REPO)/pkg/client/clientset_generated/ --clientset-name clientset -o ~/apiserver-helloworld/src/ --go-header-file boilerplate.go.txt
-	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/client-gen/main.go --input-base "$(REPO)/pkg/apis/" --input "mushroomkingdom/,hyrulekingdom/" --clientset-path $(REPO)/pkg/client/clientset_generated/ --clientset-name internalclientset -o ~/apiserver-helloworld/src/ --go-header-file boilerplate.go.txt
-#	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/lister-gen -o $(SRC)
-#	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/informer-gen -o $(SRC)
+# generate: cleangenerated
+generate:
+#	go run vendor/k8s.io/apiserver-builder/cmd/genwiring/main.go -i $(REPO)/pkg/apis/...
+#	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/conversion-gen/main.go -i "$(SRC)"  --extra-peer-dirs="k8s.io/apimachinery/pkg/apis/meta/v1,k8s.io/apimachinery/pkg/conversion,k8s.io/apimachinery/pkg/runtime" -o $(OUT)   -O zz_generated.conversion --go-header-file boilerplate.go.txt
+#	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/deepcopy-gen/main.go -i "$(SRC)" -o $(OUT) -O zz_generated.deepcopy --go-header-file boilerplate.go.txt
+#	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/openapi-gen/main.go  -i "$(SRC),$(GENERIC_API)" --output-package "$(REPO)/pkg/openapi" --go-header-file boilerplate.go.txt
+#	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/client-gen/main.go --input-base "$(REPO)/pkg/apis/" --input "mushroomkingdom/v2,hyrulekingdom/v3" --clientset-path=$(CLIENT_PATH)  --clientset-name=$(CLIENT) -o $(OUT) --go-header-file boilerplate.go.txt
+#	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/client-gen/main.go --input-base "$(REPO)/pkg/apis/" --input "mushroomkingdom/,hyrulekingdom/" --clientset-path=$(CLIENT_PATH) --clientset-name=$(INTERNAL_CLIENT)  -o $(OUT) --go-header-file boilerplate.go.txt
+#	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/lister-gen/main.go -i $(SRC) --output-package=$(LISTERS_PKG) -o $(OUT) --go-header-file boilerplate.go.txt
+	go run vendor/k8s.io/kubernetes/cmd/libs/go2idl/informer-gen/main.go -i $(SRC) -o $(OUT) --go-header-file boilerplate.go.txt --internal-clientset-package="$(CLIENT_PATH)/$(INTERNAL_CLIENT)" --versioned-clientset-package="$(CLIENT_PATH)/$(CLIENT)" --listers-package=$(LISTERS_PKG) --output-package=$(INFORMERS_PKG)
 
 build: cleanbin generate
 	go build main.go
